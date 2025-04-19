@@ -1,0 +1,59 @@
+---
+description: Project specification
+globs: 
+alwaysApply: false
+---
+# Folder breakdown
+* `mcp_server`: folder containing a MCP server responsible for pdf searching. 
+
+# Backend (Python + FastAPI)
+
+* **Project Structure:**  
+  `app/routers/`, `app/services/`, `app/core/`, `app/utils/`, `app/config/`.
+
+* **Core End‑points (MCP v0.6):**  
+  * `POST /load_pdf` – multipart file → returns `pdf_id`; triggers background ingestion.  
+  * `POST /search_pdf` – body `{ pdf_id, quote }` → returns  
+    `{ found: bool, pages: [int], snippet: str }`.  
+  * `GET /health` – readiness probe.
+
+* **PDF Pipeline:**  
+  * Extract text per page with **pdfplumber** (fallback OCR via Tesseract).  
+  * Chunk (~1 k‑token) & embed using **SentenceTransformers/all‑MiniLM‑L6‑v2**.  
+  * Store vectors in an in‑memory **FAISS** index (disk‑persisted on shutdown).  
+  * Fuzzy‑match (Levenshtein ≤ 3) to tolerate small paraphrases.
+
+* **FastAPI Practices:**  
+  * Pydantic models for request/response validation.  
+  * Global exception handler → JSON errors `{ detail, type }`.  
+  * CORS enabled for `http://localhost:5173` only.
+
+* **Tooling / Ops:**  
+  * **Poetry** for dependency management.  
+  * **Uvicorn** (`--reload`) in dev, gunicorn + uvicorn.workers.UvicornWorker in prod.  
+  * Std‑lib `logging` (INFO) → rotating file via **loguru**.  
+  * **pytest** + httpx for tests; coverage ≥ 85 %.  
+  * `.env` parsed by `python‑dotenv`; config via `pydantic.Settings`.
+
+# Tech-stack
+* **Frontend:**  
+  * **React 18 (Vite + TypeScript)** SPA.  
+  * State: built‑in `useState`/`useContext` (no Redux).  
+  * Styling: **Tailwind CSS** + optional **daisyUI**.  
+  * Routing: **React Router**.  
+
+* **Backend / MCP Server:** *See “Backend (Python + FastAPI)” spec above.*
+
+* **Vector Search & Embeddings:**  
+  * **FAISS** (cosine)  
+  * **SentenceTransformers** embeddings.
+
+* **PDF Processing:**  
+  * **pdfplumber** for text; **pytesseract** fallback for scanned pages.
+
+* **Protocol:**  
+  * **Model Context Protocol v0.6** – Claude calls `search_pdf` tool with strict JSON.
+
+* **Evaluation & Benchmarking:**  
+  * Vectara hallucination‑leaderboard CLI to compare vanilla vs. MCP‑augmented Claude.  
+  * Jupyter notebook + matplotlib for quick charts (optional).
