@@ -1,3 +1,6 @@
+#TODO
+    # remove page numbers
+    #
 import os
 import json
 import base64
@@ -5,10 +8,16 @@ import fitz  # pip install PyMuPDF
 from dotenv import load_dotenv
 import anthropic
 import re
+import voyageai
+import numpy as np
 from difflib import SequenceMatcher
+from collections import deque
 
 # Load environment variables 
 load_dotenv(override=True)
+
+# Initialize Voyage AI client
+vo = voyageai.Client()
 
 def test_quote_extraction():
     """
@@ -104,18 +113,241 @@ def get_claude_response(prompt, doc_path="documents/unlearning.pdf", doc_url="ht
 
 
 def pdf_to_text(path: str) -> str:
+    """
+    Extract text from a PDF file and save it to a text file.
+    
+    Args:
+        path: Path to the PDF file
+        
+    Returns:
+        str: The extracted text
+    """
+    # Extract text from PDF
     doc = fitz.open(path)
     parts = []
     for page in doc:
         parts.append(page.get_text())      # 'text' is default; returns UTF‑8 str
     text = "\n".join(parts)
-    print(f"{text=}")
+    
+    # Create parsed_pdfs directory if it doesn't exist
+    parsed_dir = "parsed_pdfs"
+    os.makedirs(parsed_dir, exist_ok=True)
+    
+    # Get PDF filename without extension
+    pdf_name = os.path.splitext(os.path.basename(path))[0]
+    
+    # Save text to file
+    output_path = os.path.join(parsed_dir, f"{pdf_name}.txt")
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(text)
+    
     return text
+
+def jaccard(a: list[str], b: list[str]) -> float:
+    """
+    Calculate Jaccard similarity between tjjjjjwo lists of strings.
+    Jaccard similarity is the ratio of the size of the intersection to the size of the union.
+    
+    Args:
+        a: First list of strings
+        b: Second list of strings
+        
+    Returns:
+        float: Jaccard similarity score between 0 and 1
+    """
+    # Convert lists to sets for efficient intersection/union operations
+    sa, sb = set(a), set(b)
+    # Calculate intersection and union
+    inter = sa & sb
+    union = sa | sb
+    # Return 0 if union is empty, otherwise return ratio of intersection to union
+    return 0.0 if not union else len(inter)/len(union)
+
+def best_jaccard(quote: str, pdf: str, words_per_window: int = 10) -> float:
+    """
+    Find the best Jaccard similarity between a quote and any window of text in the PDF.
+    Uses a sliding window approach with fixed window size.
+    
+    Args:
+        quote: The quote to search for
+        pdf: The text to search in
+        words_per_window: Number of words in each window (default 10)
+             
+    Returns:
+        float: The highest Jaccard similarity score found (between 0 and 1)
+    """
+    # Split both texts into words
+    qtoks = quote.split()
+    ptoks = pdf.split()
+    
+    # Create a sliding window with fixed size
+    window = deque(maxlen=words_per_window)
+    best = 0.0
+    
+    # Slide the window through the PDF text
+    for tok in ptoks:
+        window.append(tok)
+        
+        # Only start comparing once we have a full window
+        if len(window) == words_per_window:
+            # Calculate Jaccard similarity between quote and current window
+            current_score = jaccard(qtoks, list(window))
+            best = max(best, current_score)
+            
+            # Early exit if we find a perfect match
+            if best == 1.0:
+                break
+                
+    return best
+
+def find_relevant_text(text: str, quote: str, matching_sequence_length: int = 4) -> str:
+    """
+    Find the relevant portion of text that contains the quote by matching sequences of words.
+    
+    Args:
+        text: The full text to search in
+        quote: The quote to find in the text
+        matching_sequence_length: Number of words to use for matching sequences
+        
+    Returns:
+        str: The relevant portion of text containing the quote, or empty string if not found
+    """
+    text_words = text.split()
+    quote_words = quote.split()
+    
+    # If quote is empty or text is empty, return 0
+    if not quote_words or not text_words:
+        return ""
+        
+    # Need at least matching_sequence_length words in quote to use this method
+    if len(quote_words) < matching_sequence_length:
+        return ""
+        
+    # Create n-word sequences
+    def get_sequences(words, n):
+        return [' '.join(words[i:i+n]) for i in range(len(words)-n+1)]
+        
+    text_sequences = get_sequences(text_words, matching_sequence_length)
+    quote_start_sequence = ' '.join(quote_words[:matching_sequence_length])
+    quote_end_sequence = ' '.join(quote_words[-matching_sequence_length:])
+    
+    # Find the start sequence in the text
+    try:
+        start_idx = text_sequences.index(quote_start_sequence)
+    except ValueError:
+        return ""  # Start sequence not found
+        
+    # Find the end sequence in the text, starting from the start index
+    try:
+        end_idx = text_sequences.index(quote_end_sequence, start_idx)
+    except ValueError:
+        return ""  # End sequence not found
+        
+    # Get the relevant substring of text (convert from sequence index to word index)
+    start_word_idx = start_idx
+    end_word_idx = end_idx + (matching_sequence_length - 1)  # Add (n-1) to get the last word of the n-word sequence
+    return ' '.join(text_words[start_word_idx:end_word_idx + 1])
+
+def find_relevant_text_claude(text: str, quote: str, start_tag: str = "<quote>", end_tag: str = "</quote>") -> str:
+    """
+    Find the relevant portion of text that contains the quote using Claude.
+    
+    Args:
+        text: The full text to search in
+        quote: The quote to find in the text
+        start_tag: The tag that marks the start of the relevant text (default: "<start>")
+        end_tag: The tag that marks the end of the relevant text (default: "<end>")
+        
+    Returns:
+        str: The relevant portion of text containing the quote, or empty string if not found
+    """
+    # Initialize the Anthropic client
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    client = anthropic.Anthropic(api_key=api_key)
+    
+    # Create a prompt that asks Claude to find the relevant text
+    prompt = f"""Given the following text and quote, find the exact portion of text that contains the quote.
+If the quote appears multiple times, return the first occurrence.
+If the quote is not found, return "NOT FOUND".
+
+Text:
+{text}
+
+Quote to find:
+{quote}
+
+Return the exact portion of text that contains the quote in {start_tag} {end_tag} tags, or "NOT FOUND" if not found."""
+
+    try:
+        message = client.messages.create(
+            model="claude-3-5-haiku-20241022",
+            max_tokens=1024,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )
+        
+        response = message.content[0].text.strip()
+        
+        # Check if response is "NOT FOUND"
+        if response == "NOT FOUND":
+            return ""
+            
+        # Extract text between start and end tags
+        import re
+        pattern = f'{re.escape(start_tag)}(.*?){re.escape(end_tag)}'
+        match = re.search(pattern, response, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+        else:
+            print(f"Warning: Could not find tags in Claude response: {response}")
+            return ""
+            
+    except Exception as e:
+        print(f"Error using Claude to find relevant text: {e}")
+        return ""
+
+def check_quote_to_text_ratio(text: str, quote: str, matching_sequence_length: int = 4, use_claude: bool = True) -> float:
+    """
+    Calculate the ratio of words in the quote that appear in the relevant portion of text.
+    
+    Args:
+        text: The full text to search in
+        quote: The quote to find in the text
+        matching_sequence_length: Number of words to use for matching sequences
+        use_claude: Whether to use Claude to find the relevant text (default: False)
+        
+    Returns:
+        float: Ratio between 0 and 1 representing how many words from the quote appear in the relevant text
+    """
+    relevant_text = find_relevant_text_claude(text, quote) if use_claude else find_relevant_text(text, quote, matching_sequence_length)
+    
+    if not relevant_text:
+        return 0.0
+        
+    print(
+        f"{relevant_text=}\n\n",
+        f"{quote=}\n\n\n\n"
+    )
+    
+    # Now compare quote against this substring
+    text_set = set(relevant_text.split())
+    quote_set = set(quote.split())
+    
+    elements_in_both = 0
+    for elm in quote_set:
+        elements_in_both += 1 if elm in text_set else 0
+    
+    return elements_in_both / len(quote_set)
 
 
 def check_quote_in_text(text: str, quote: str) -> float:
     """
-    Check if a quote exists in the given text.
+    Check if a quote exists in the given text by splitting it into chunks
+    and finding the minimum similarity score across all chunks.
     
     Args:
         text (str): The text to search in
@@ -124,7 +356,7 @@ def check_quote_in_text(text: str, quote: str) -> float:
     Returns:
         float: A score between 0 and 1, where:
             - 1.0 means an exact match was found
-            - Values between 0 and 1 represent similarity scores for partial matches
+            - Values between 0 and 1 represent the minimum similarity score across chunks
     """
     # Convert both to lowercase for case-insensitive search
     text_lower = text.lower()
@@ -139,8 +371,8 @@ def check_quote_in_text(text: str, quote: str) -> float:
         text = re.sub(r'[\u00AD\-]', '', text)  # strip any remaining hyphens/soft‑hyphens
         return " ".join(text.split()).lower()
     
-    text_norm  = normalise(text)
-    quote_norm = normalise(quote)
+    text_norm  = normalise(text.lower())
+    quote_norm = normalise(quote.lower())
 
     no_hyphen_text_lower = remove_hyphen_breaks(text_lower)
     
@@ -154,6 +386,20 @@ def check_quote_in_text(text: str, quote: str) -> float:
     clean_no_hyphen_text_lower = clean_text(no_hyphen_text_lower)
     clean_text_lower = clean_text(text_lower)
     clean_quote_lower = clean_text(quote_lower)
+    clean_text_norm = clean_text(text_norm)
+    clean_quote_norm = clean_text(quote_norm)
+    
+    # Save cleaned versions to files
+    parsed_dir = "parsed_pdfs"
+    os.makedirs(parsed_dir, exist_ok=True)
+    
+    # Save cleaned text
+    with open(os.path.join(parsed_dir, "cleaned_text.txt"), 'w', encoding='utf-8') as f:
+        f.write(clean_text_norm)
+    
+    # Save cleaned quote
+    with open(os.path.join(parsed_dir, "cleaned_quote.txt"), 'w', encoding='utf-8') as f:
+        f.write(clean_quote_norm)
     
     # Check if quote exists in text
     is_found = (
@@ -163,22 +409,37 @@ def check_quote_in_text(text: str, quote: str) -> float:
         or clean_quote_lower in clean_no_hyphen_text_lower 
         or quote_lower in no_hyphen_text_lower
         or quote_norm in text_norm
+        or clean_quote_norm in clean_text_norm 
     )
     
+    check_quote_to_text_ratio(clean_text_norm, clean_quote_norm)
+
     if is_found:
         return 1.0
+
+    return check_quote_to_text_ratio(clean_text_norm, clean_quote_norm)
     
-    # If not found, calculate fuzzy match score
-    # Use SequenceMatcher to find the best matching substring
-    matcher = SequenceMatcher(None, clean_quote_lower, clean_text_lower)
-    match = matcher.find_longest_match(0, len(clean_quote_lower), 0, len(clean_text_lower))
+    # # Split quote into chunks of 10 words each
+    # def split_into_chunks(text: str, words_per_chunk: int = 10) -> list[str]:
+    #     words = text.split()
+    #     chunks = []
+    #     for i in range(0, len(words), words_per_chunk):
+    #         chunk = ' '.join(words[i:i + words_per_chunk])
+    #         if chunk.strip():  # Only add non-empty chunks
+    #             chunks.append(chunk)
+    #     return chunks
     
-    if match.size > 0:
-        # Calculate similarity score for the matching part
-        matching_text = clean_text_lower[match.b:match.b + match.size]
-        return SequenceMatcher(None, clean_quote_lower, matching_text).ratio()
+    # # Split the normalized quote into chunks
+    # quote_chunks = split_into_chunks(clean_quote_norm)
     
-    return 0.0
+    # # Calculate similarity score for each chunk
+    # chunk_scores = []
+    # for chunk in quote_chunks:
+    #     score = best_jaccard(chunk, clean_text_norm)
+    #     chunk_scores.append(score)
+    
+    # # Return the minimum score across all chunks
+    # return min(chunk_scores) if chunk_scores else 0.0
 
 
 def extract_and_validate_quotes(
@@ -253,22 +514,21 @@ def main():
     try:
         # Get response from Claude
         response = get_claude_response(prompt)
-        print("Claude's response:")
-        print(response)
         
         # Get PDF text for validation
         pdf_name = "unlearning.pdf"
         pdf_dir = "documents"
         pdf_path = os.path.join(pdf_dir, pdf_name)
         pdf_text = pdf_to_text(pdf_path)
-        print("\n\n\npdf_text\n\n\n")
-        print(pdf_text)
-        print("\n\n\nend of pdf text\n\n")
+        # print("\n\n\npdf_text\n\n\n")
+        # print(pdf_text)
+        # print("\n\n\nend of pdf text\n\n")
+        
         
         # Extract and validate quotes
         validation_results = extract_and_validate_quotes(response, pdf_text)
-        print("\n\n\nPrinting Validation Resulsts\n\n")
-        print(json.dumps(validation_results))
+        # print("\n\n\nPrinting Validation Resulsts\n\n")
+        # print(json.dumps(validation_results))
         
         # Save results to JSON file
         output_dir = "results"

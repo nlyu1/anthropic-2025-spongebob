@@ -1,34 +1,34 @@
 {
   "Quote 1": {
-    "quote": "Historically, it has been unclear whether unlearning techniques are removing information from the model weights or just making it harder to access. To disentangle these two objectives, we propose an adversarial evaluation method to test for the removal of information from model weights",
-    "similarity_score": 1.0
+    "quote": "While unlearning is used in previous work to imply both removing information and making it harder to access, removing information is a stronger guarantee, as making information harder to access is vulnerable to attacks that make the information easily accessible again like jailbreaking and fine-tuning.",
+    "similarity_score": 0.9696969696969697
   },
   "Quote 2": {
+    "quote": "We introduce a new approach based on an adversarial setup to evaluate the presence of information in the weights. The developers of an unlearning method identify a set of independent facts the model contains that should be removed from the model weights after unlearning, and which have negligible mutual information given the rest of the training data. These facts are randomly split into train and validation subsets, T and V. An attacker then tries to recover the facts V using (1) the model weights \u03b8 and (2) the facts T.",
+    "similarity_score": 0.96875
+  },
+  "Quote 3": {
     "quote": "The attack we study in this work is Retraining on T (RTT) which is illustrated in Figure 1: the attacker trains the unlearned model on the facts they have access to, T. After performing RTT, we can use accuracy on V to approximate the mutual information introduced in section 3.1: if the accuracy on V is high, mutual information has to be high. If the accuracy is close to random chance, mutual information is probably low.",
     "similarity_score": 1.0
   },
-  "Quote 3": {
-    "quote": "Using fine-tuning on the accessible facts can recover 88% of the pre-unlearning accuracy when applied to current unlearning methods for information learned during pretraining, revealing the limitations of these methods in removing information from the model weights.",
-    "similarity_score": 1.0
-  },
   "Quote 4": {
-    "quote": "For all methods, RTT recovers the forget accuracy close to its original level for pretrained information (Years, MMLU, and WMDP-Deduped datasets), which suggests that most of the information was hidden, not removed from the weights.",
+    "quote": "We show that using fine-tuning on the accessible facts can recover 88% of the pre-unlearning accuracy when applied to current unlearning methods for information learned during pretraining, revealing the limitations of these methods in removing information from the model weights.",
     "similarity_score": 1.0
   },
   "Quote 5": {
-    "quote": "1. Gradient Difference (GD) (Liu et al., 2022): Gradient Ascent on the forget dataset and Gradient Descent on the retain dataset. LossGD = \u2212LossForget + \u03b1 \u2217 LossRetain Where \u03b1 is the retain coefficient. We note that using a retain coefficient of 0 corresponds to using the Gradient Ascent unlearning method. 2. RMU (Li et al., 2024b): An unlearning technique that perturbs the activations of the model in a subset of the models' layers for harmful prompts while preserving the activations for non-harmful prompts. 3. Random Incorrect Answer (RIA): For each question with multiple choice answers, we create a plain-text formatted datapoint for each incorrect choice and perform gradient descent on these texts.",
-    "similarity_score": 0.3606936416184971
-  },
-  "Quote 6": {
-    "quote": "1. The dataset has little shared information among facts: Learning some of the facts should not help in learning the rest if the information is not already present in the weights. 2. Models perform well on the dataset before unlearning: This means we do not need to fine-tune the models on the information, which may result in a different response to unlearning compared to information learned in pretraining. 3. The data resembles what unlearning is used for in practice.",
+    "quote": "We run evaluations on common unlearning methods. This includes Gradient Ascent, RMU, and training on incorrect facts. We show that after performing our attack to recover hidden information, we can recover at least 88% of the pre-unlearning accuracy for all the unlearning methods we evaluate when unlearning information learned in pretraining, and when the unlearning maintains good performance on non-unlearned tasks.",
     "similarity_score": 1.0
   },
-  "Quote 7": {
+  "Quote 6": {
     "quote": "RTT does not recover information for the fine-tuned dataset (Random Birthdays); we still get a high recovery rate for RMU, but a recovery rate less than 35% for GD and RIA. We suspect that changes introduced by fine-tuning might be relatively superficial and easy to reverse as observed by Jain et al. (2024).",
     "similarity_score": 1.0
   },
-  "Quote 8": {
+  "Quote 7": {
     "quote": "Our results also suggest that unlearning evaluations that measure unlearning robustness on information learned during an additional fine-tuning phase may overestimate robustness compared to evaluations that attempt to unlearn information learned during pretraining.",
+    "similarity_score": 1.0
+  },
+  "Quote 8": {
+    "quote": "1. Indicate whether the purpose of the proposed method is to remove information or make the information harder to access in the model. 2. When the goal is removing capabilities and/or knowledge, evaluate the proposed method against attacks that aim to recover them, like using the RTT attack presented in this paper. Additionally, we recommend testing against information learned during pretraining, as information learned by fine-tuning might not transfer to realistic settings; our evaluations on the Random Birthdays dataset overestimate the robustness of some unlearning techniques compared to datasets containing pretrained information. 3. Release the models the proposed method was applied to and the code base used to apply the method to facilitate evaluating the robustness of the method by other researchers.",
     "similarity_score": 1.0
   }
 }
