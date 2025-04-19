@@ -1,0 +1,4 @@
+Hi Claude!
+I want you to summarize the document attached. for each point in your summary, you must provide a quote from the pdf that support this point. You will be penalized if you don't provide a quote. When you provide a quote, it must be using this format: <quote> .... </quote>
+In addition, in the quotes, you must list the entire quote as is without any alteration or using three dots to skip some parts.
+Remember, you must use quotes and use this format.
