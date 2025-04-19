@@ -415,31 +415,9 @@ def check_quote_in_text(text: str, quote: str) -> float:
     check_quote_to_text_ratio(clean_text_norm, clean_quote_norm)
 
     if is_found:
-        return 1.0
+        return True
 
-    return check_quote_to_text_ratio(clean_text_norm, clean_quote_norm)
-    
-    # # Split quote into chunks of 10 words each
-    # def split_into_chunks(text: str, words_per_chunk: int = 10) -> list[str]:
-    #     words = text.split()
-    #     chunks = []
-    #     for i in range(0, len(words), words_per_chunk):
-    #         chunk = ' '.join(words[i:i + words_per_chunk])
-    #         if chunk.strip():  # Only add non-empty chunks
-    #             chunks.append(chunk)
-    #     return chunks
-    
-    # # Split the normalized quote into chunks
-    # quote_chunks = split_into_chunks(clean_quote_norm)
-    
-    # # Calculate similarity score for each chunk
-    # chunk_scores = []
-    # for chunk in quote_chunks:
-    #     score = best_jaccard(chunk, clean_text_norm)
-    #     chunk_scores.append(score)
-    
-    # # Return the minimum score across all chunks
-    # return min(chunk_scores) if chunk_scores else 0.0
+    return check_quote_to_text_ratio(clean_text_norm, clean_quote_norm) > 0.9
 
 
 def extract_and_validate_quotes(
@@ -458,7 +436,11 @@ def extract_and_validate_quotes(
         quote_end (str): The string that marks the end of a quote
         
     Returns:
-        dict: A dictionary containing the validation results for each quote
+        dict: A dictionary where the key is a string containing a the quote 
+        number and the value is another dictionary. This inner dictionary has 
+        two keys `quote` which gives you the quote the claude had in its
+        response, and `similarity_score` which gives you a float indicating the 
+        similarity between claude's quote and the parsed pdf's text.
     """
     # Regular expression to find quotes with custom start/end markers
     quote_pattern = f'{re.escape(quote_start)}(.*?){re.escape(quote_end)}'
@@ -520,16 +502,10 @@ def main():
         pdf_dir = "documents"
         pdf_path = os.path.join(pdf_dir, pdf_name)
         pdf_text = pdf_to_text(pdf_path)
-        # print("\n\n\npdf_text\n\n\n")
-        # print(pdf_text)
-        # print("\n\n\nend of pdf text\n\n")
         
         
         # Extract and validate quotes
         validation_results = extract_and_validate_quotes(response, pdf_text)
-        # print("\n\n\nPrinting Validation Resulsts\n\n")
-        # print(json.dumps(validation_results))
-        
         # Save results to JSON file
         output_dir = "results"
         os.makedirs(output_dir, exist_ok=True)
