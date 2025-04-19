@@ -1,0 +1,4 @@
+2025-04-19 17:17:02,806 - INFO - Server starting. Logging to ./logs/2025-04-19_17-17-02.log
+2025-04-19 17:17:02,806 - INFO - Expecting PDF files in: /Users/aldostefanoni/Desktop/mcp/files
+2025-04-19 17:17:02,808 - INFO - Starting MCP server...
+2025-04-19 17:17:02,815 - INFO - Processing request of type ListToolsRequest

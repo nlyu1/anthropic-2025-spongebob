@@ -1,0 +1,7 @@
+2025-04-19 19:20:43,858 - INFO - Server starting. Logging to ./logs/2025-04-19_19-20-43.log
+2025-04-19 19:20:43,859 - INFO - Expecting PDF files in: /Users/aldostefanoni/Desktop/mcp/files
+2025-04-19 19:20:43,861 - INFO - Starting MCP server...
+2025-04-19 19:20:43,868 - INFO - Processing request of type ListToolsRequest
+2025-04-19 19:21:01,236 - INFO - Processing request of type CallToolRequest
+2025-04-19 19:21:01,238 - INFO - Received request: search_pdf(pdf_name='DOC', query='circadian misalignment', context_length=1000, topk=10)
+2025-04-19 19:21:01,448 - INFO - Search completed. File exists: True, Query exists: True, Matches found: 10

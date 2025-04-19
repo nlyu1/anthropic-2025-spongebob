@@ -1,0 +1,8 @@
+2025-04-19 17:57:22,157 - INFO - Server starting. Logging to ./logs/2025-04-19_17-57-22.log
+2025-04-19 17:57:22,157 - INFO - Expecting PDF files in: /Users/aldostefanoni/Desktop/mcp/files
+2025-04-19 17:57:22,160 - INFO - Starting MCP server...
+2025-04-19 17:57:22,167 - INFO - Processing request of type ListToolsRequest
+2025-04-19 17:57:44,839 - INFO - Processing request of type CallToolRequest
+2025-04-19 17:57:44,841 - INFO - Received request: search_pdf(pdf_name='Adverse metabolic and cardiovascular consequences of circadian misalignment', query='introduction shift work circadian', context_length=1500, topk=10)
+2025-04-19 17:57:44,841 - INFO - Search completed. File exists: False, Query exists: False, Matches found: 0
+2025-04-19 17:57:44,841 - ERROR - Error during search: File not found: ../files/Adverse metabolic and cardiovascular consequences of circadian misalignment.pdf

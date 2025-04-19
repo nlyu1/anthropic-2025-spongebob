@@ -1,0 +1,14 @@
+2025-04-19 17:58:08,164 - INFO - Server starting. Logging to ./logs/2025-04-19_17-58-08.log
+2025-04-19 17:58:08,164 - INFO - Expecting PDF files in: /Users/aldostefanoni/Desktop/mcp/files
+2025-04-19 17:58:08,166 - INFO - Starting MCP server...
+2025-04-19 17:58:08,172 - INFO - Processing request of type ListToolsRequest
+2025-04-19 17:58:25,852 - INFO - Processing request of type CallToolRequest
+2025-04-19 17:58:25,853 - INFO - Received request: search_pdf(pdf_name='Adverse metabolic and cardiovascular consequences', query='Introduction', context_length=2000, topk=10)
+2025-04-19 17:58:25,854 - INFO - Search completed. File exists: False, Query exists: False, Matches found: 0
+2025-04-19 17:58:25,854 - ERROR - Error during search: File not found: ../files/Adverse metabolic and cardiovascular consequences.pdf
+2025-04-19 18:08:24,922 - INFO - Processing request of type CallToolRequest
+2025-04-19 18:08:24,926 - INFO - Received request: search_pdf(pdf_name='DOC', query='epidemiological evidence that shift work is associated', context_length=200, topk=10)
+2025-04-19 18:08:25,126 - INFO - Search completed. File exists: True, Query exists: False, Matches found: 0
+2025-04-19 18:10:20,849 - INFO - Processing request of type CallToolRequest
+2025-04-19 18:10:20,852 - INFO - Received request: search_pdf(pdf_name='DOC', query='There is considerable epidemiological evidence that shift work is associated with increased risk for obesity, diabetes, and cardiovascular disease', context_length=2000, topk=10)
+2025-04-19 18:10:21,081 - INFO - Search completed. File exists: True, Query exists: False, Matches found: 0

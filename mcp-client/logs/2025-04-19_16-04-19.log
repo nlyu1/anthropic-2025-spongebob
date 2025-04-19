@@ -1,0 +1,22 @@
+2025-04-19 16:04:19,754 - INFO - Server starting. Logging to ./logs/2025-04-19_16-04-19.log
+2025-04-19 16:04:19,754 - INFO - Expecting PDF files in: /Users/aldostefanoni/files
+2025-04-19 16:04:19,759 - INFO - Starting MCP server...
+2025-04-19 16:04:19,764 - INFO - Processing request of type ListToolsRequest
+2025-04-19 16:06:42,324 - INFO - Processing request of type ListToolsRequest
+2025-04-19 16:06:44,251 - INFO - Processing request of type CallToolRequest
+2025-04-19 16:06:44,252 - INFO - Received request: search_pdf(pdf_name='DOC', query='Thus, it is necessary', context_length=2000, topk=10)
+2025-04-19 16:06:44,463 - INFO - Search completed. File exists: True, Query exists: True, Matches found: 1
+2025-04-19 16:06:46,833 - INFO - Processing request of type ListToolsRequest
+2025-04-19 16:07:25,125 - INFO - Processing request of type ListToolsRequest
+2025-04-19 16:07:27,233 - INFO - Processing request of type CallToolRequest
+2025-04-19 16:07:27,234 - INFO - Received request: search_pdf(pdf_name='DOC', query='Thus, it is necessary', context_length=2000, topk=10)
+2025-04-19 16:07:27,464 - INFO - Search completed. File exists: True, Query exists: True, Matches found: 1
+2025-04-19 16:07:54,090 - INFO - Processing request of type ListToolsRequest
+2025-04-19 16:07:56,112 - INFO - Processing request of type CallToolRequest
+2025-04-19 16:07:56,112 - INFO - Received request: search_pdf(pdf_name='DOC', query='Thus, it is necessary', context_length=2000, topk=10)
+2025-04-19 16:07:56,325 - INFO - Search completed. File exists: True, Query exists: True, Matches found: 1
+2025-04-19 16:11:49,652 - INFO - Processing request of type ListToolsRequest
+2025-04-19 16:13:38,086 - INFO - Processing request of type ListToolsRequest
+2025-04-19 16:13:40,412 - INFO - Processing request of type CallToolRequest
+2025-04-19 16:13:40,414 - INFO - Received request: search_pdf(pdf_name='DOC', query='introduction', context_length=2000, topk=10)
+2025-04-19 16:13:40,625 - INFO - Search completed. File exists: True, Query exists: False, Matches found: 0

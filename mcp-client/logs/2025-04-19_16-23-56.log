@@ -1,0 +1,10 @@
+2025-04-19 16:23:56,223 - INFO - Server starting. Logging to ./logs/2025-04-19_16-23-56.log
+2025-04-19 16:23:56,223 - INFO - Expecting PDF files in: /Users/aldostefanoni/Desktop/mcp/files
+2025-04-19 16:23:56,226 - INFO - Starting MCP server...
+2025-04-19 16:23:56,233 - INFO - Processing request of type ListToolsRequest
+2025-04-19 16:24:11,841 - INFO - Processing request of type CallToolRequest
+2025-04-19 16:24:11,847 - INFO - Received request: search_pdf(pdf_name='DOC', query='The effects of behavioral', context_length=2000, topk=10)
+2025-04-19 16:24:12,040 - INFO - Search completed. File exists: True, Query exists: False, Matches found: 0
+2025-04-19 16:24:30,876 - INFO - Processing request of type CallToolRequest
+2025-04-19 16:24:30,879 - INFO - Received request: search_pdf(pdf_name='DOC', query='The effects of the behavioral', context_length=2000, topk=10)
+2025-04-19 16:24:31,111 - INFO - Search completed. File exists: True, Query exists: True, Matches found: 2
