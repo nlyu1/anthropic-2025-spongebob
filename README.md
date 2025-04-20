@@ -8,6 +8,9 @@ This project enhances the [Open WebUI](https://github.com/open-webui/open-webui)
 2.  **Chat Backend (`front-test/backend/`):** The standard OpenWebUI backend (Python), which serves the frontend.
 3.  **Custom API Backend (`backend/`):** A separate FastAPI backend leveraging Anthropic's Claude model and MCP for PDF processing, search, and reliable citations.
 
+## Benchmark
+<img width="819" alt="image" src="https://github.com/user-attachments/assets/5dded91a-c91a-4d87-ac8d-5207f3669aad" />
+
 ## Core Features
 
 *   **Enhanced Chat Interface:** Utilizes the feature-rich OpenWebUI frontend.
