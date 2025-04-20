@@ -37,7 +37,7 @@ logger.info(f"Expecting PDF files in: {os.path.abspath(DEFAULT_FILES_DIR)}")
 mcp = FastMCP("pdf_searcher")
 
 @mcp.tool()
-def search_pdf(pdf_name: str, query: str, context_length: int = 2000, topk: int = 10) -> Dict[str, Any]:
+def search_pdf(pdf_name: str, query: str, pdf_dir: str = "./files", context_length: int = 2000, topk: int = 10) -> Dict[str, Any]:
     """Searches a PDF file for a query string.
 
     Looks for the PDF file in the '../files/' directory relative to the server script.
@@ -45,6 +45,7 @@ def search_pdf(pdf_name: str, query: str, context_length: int = 2000, topk: int 
 
     Args:
         pdf_name: Name of the PDF file (without .pdf extension).
+        pdf_dir: directory of the pdf_dir. Always specify ./files unless expicitly prompted by the user
         query: The text string to search for.
         context_length: The amount of context (characters) around each match.
         topk: Maximum number of matches to return.
@@ -62,8 +63,8 @@ def search_pdf(pdf_name: str, query: str, context_length: int = 2000, topk: int 
             pdf_name=pdf_name,
             query=query,
             context_length=context_length,
-            topk=topk
-            # files_dir argument is omitted to use the default defined in pdf_search.py
+            topk=topk,
+            pdf_dir=pdf_dir
         )
         logger.info(f"Search completed. File exists: {result.get('file_exists')}, Query exists: {result.get('query_exists')}, Matches found: {len(result.get('matches', []))}")
         if 'error' in result:

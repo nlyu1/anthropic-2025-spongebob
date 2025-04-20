@@ -9,4 +9,6 @@ dependencies = [
     "mcp[cli]>=1.6.0",
     "pdfminer.six>=20240705",
     "rapidfuzz>=3.0.0",
+    "openai",
+    "PyMuPDF>=1.23.8 ",
 ]

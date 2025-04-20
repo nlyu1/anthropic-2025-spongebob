@@ -20,6 +20,8 @@ dependencies = [
     "httpx>=0.28.1",
     "python-dotenv>=1.0.1",
     "rapidfuzz>=3.0.0",
+    "openai",
+    "PyMuPDF>=1.23.8 ",
 ]
 
 [tool.uv]

@@ -1,14 +1,43 @@
 import os
-import base64
 import glob
 import logging
+import fitz  # PyMuPDF
 
 logger = logging.getLogger(__name__)
 
-MAX_INLINE_MB = 10     # keep token usage reasonable
+def pdf_to_text(path: str) -> str:
+    """
+    Extract text from a PDF file and save it to a text file.
+    
+    Args:
+        path: Path to the PDF file
+        
+    Returns:
+        str: The extracted text
+    """
+    # Extract text from PDF
+    doc = fitz.open(path)
+    parts = []
+    for page in doc:
+        parts.append(page.get_text())      # 'text' is default; returns UTF‑8 str
+    text = "\n".join(parts)
+    
+    # Create parsed_pdfs directory if it doesn't exist
+    parsed_dir = "parsed_pdfs"
+    os.makedirs(parsed_dir, exist_ok=True)
+    
+    # Get PDF filename without extension
+    pdf_name = os.path.splitext(os.path.basename(path))[0]
+    
+    # Save text to file
+    output_path = os.path.join(parsed_dir, f"{pdf_name}.txt")
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(text)
+    
+    return text
 
 def load_pdf_as_blocks(pdf_root='./files', filenames: list[str] | None = None) -> list[dict]:
-    """Return a list of {'type':'document', ...} blocks for PDFs in ./files.
+    """Return a list of {'type':'text', ...} blocks for PDFs in ./files.
     
     Args:
         filenames: Optional list of filenames (without extension) to load.
@@ -16,7 +45,7 @@ def load_pdf_as_blocks(pdf_root='./files', filenames: list[str] | None = None) -
                    Example: ['document1', 'report_final']
     
     Returns:
-        A list of document blocks.
+        A list of text blocks containing the extracted PDF content.
     """
     blocks: list[dict] = []
     pdf_paths_to_load: list[str] = []
@@ -39,44 +68,17 @@ def load_pdf_as_blocks(pdf_root='./files', filenames: list[str] | None = None) -
         logger.info(f'[INFO / pdf_loading_utils / load_pdf_as_blocks] Found matching PDF files: {pdf_paths_to_load}')
 
     for path, name in zip(pdf_paths_to_load, filenames):
-        size_mb = os.path.getsize(path) / 1_048_576
-        if size_mb > MAX_INLINE_MB:
-            logger.warning(f"⚠️  Skipping {os.path.basename(path)} – {size_mb:.1f} MB > {MAX_INLINE_MB} MB inline limit")
-            continue
-
         try:
-            with open(path, "rb") as f:
-                # Read original content
-                original_content = f.read()
-
-            # Prepend filename information - NOTE: This might corrupt the PDF structure for some parsers.
-            # Consider adding filename context as a separate text block in the message if issues arise.
-            # filename_info = f"Content of file: {name}.pdf\n\n---\n\n".encode('utf-8')
-            # combined_content = filename_info + original_content
-            # b64_pdf = base64.b64encode(combined_content).decode('utf-8')
-
-            # Encode the original content directly as per standard practice
-            b64_pdf = base64.b64encode(original_content).decode('utf-8')
-
-            # Structure the document block according to Anthropic API spec (no top-level 'name')
-            pdf_block = {
-                "type": "document",
-                # The 'name' field caused the BadRequestError and is removed.
-                # Filename context should be provided elsewhere, e.g., in a preceding text block.
-                "source": {
-                    "type": "base64",
-                    "media_type": "application/pdf",
-                    "data": b64_pdf
-                }
-            }
-            # Add a text block *before* the document block to provide filename context
+            # Extract text from PDF using PyMuPDF
+            extracted_text = pdf_to_text(path)
+            
+            # Add a text block with the extracted content
             filename_context_block = {
                 "type": "text",
-                "text": f"--- Attached PDF: {name}.pdf ---"
+                "text": f"--- Content from PDF: {name}.pdf ---\n\n{extracted_text}"
             }
             blocks.append(filename_context_block)
-            blocks.append(pdf_block)
-            logger.info(f"Added document block for {name}.pdf")
+            logger.info(f"Added text block for {name}.pdf")
 
         except Exception as e:
             logger.error(f"Error processing file {path}: {e}", exc_info=True)
