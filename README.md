@@ -96,3 +96,86 @@ A simple test script is provided to check basic functionality.
     uv run python tests/test_upload.py
     ```
     The script will print `Test PASSED` or `Test FAILED`.
+
+## OpenAI-Compatible API Endpoints
+
+The backend now provides OpenAI-compatible endpoints for using with Open WebUI:
+
+### Setup
+
+1. Start the backend server:
+   ```bash
+   cd backend
+   source .venv/bin/activate
+   uvicorn app.main:app --reload --port 8000
+   ```
+
+   Or simply run the provided script:
+   ```bash
+   ./start_backend.sh
+   ```
+
+2. Configure Open WebUI to use the backend:
+   - Set API Base URL: `http://127.0.0.1:8000/v1`
+   - Any value can be used for the API key as it's not verified
+
+### Available Endpoints:
+
+- `GET /v1/models` - Lists available models (currently only shows the "pdf-master" model)
+- `POST /v1/chat/completions` - Processes chat messages with OpenAI-compatible format
+- `POST /api/v1/files/` - Uploads PDF files and returns compatible metadata
+
+### Working with Files
+
+The backend supports uploading and referencing PDF files:
+
+1. **Uploading Files**:
+   ```bash
+   curl -F "file=@sample.pdf" http://127.0.0.1:8000/api/v1/files/
+   ```
+
+2. **Using Files in Chat**:
+   ```bash
+   curl -X POST http://127.0.0.1:8000/v1/chat/completions \
+     -H "Content-Type: application/json" \
+     -d '{
+       "model": "pdf-master", 
+       "messages": [{"role": "user", "content": "What is in this document?"}], 
+       "files": [{"type": "file", "id": "YOUR_FILE_ID"}]
+     }'
+   ```
+
+### Testing
+
+You can test all endpoints with curl:
+
+```bash
+# Test models endpoint
+curl http://127.0.0.1:8000/v1/models
+
+# Test chat endpoint (streaming mode)
+curl -X POST http://127.0.0.1:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"pdf-master", "messages":[{"role":"user","content":"hi"}]}'
+
+# Test chat endpoint (non-streaming mode)
+curl -X POST http://127.0.0.1:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"pdf-master", "messages":[{"role":"user","content":"hi"}], "stream":false}'
+```
+
+### Integration with Real Chat Processing
+
+The current implementation is a simple echo service. To integrate with actual PDF search functionality, 
+you'll need to modify `backend/app/openai_echo.py` to connect with your existing PDF processing pipeline. 
+
+The `completions` function already detects file references in the format Open WebUI sends them:
+```python
+files = body.get("files", [])
+if files:
+    # Process each file ID and fetch content as needed
+    for file in files:
+        file_id = file.get("id")
+        file_type = file.get("type", "file")
+        # Connect to your PDF search pipeline here
+```

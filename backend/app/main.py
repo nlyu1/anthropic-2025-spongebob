@@ -6,9 +6,12 @@ import logging # Import logging
 from fastapi import FastAPI, UploadFile, File, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
+import datetime
+import hashlib
 
 from .orchestrator import MCPClient
 from .settings import cors_origins, files_dir
+from .openai_echo import router as echo_router
 
 app = FastAPI()
 
@@ -16,23 +19,17 @@ app = FastAPI()
 logging.basicConfig(level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Configure CORS
-origins = [
-    origin.strip()
-    for origin in cors_origins.split(',')
-    if origin.strip()
-]
-if not origins:
-    # Default if CORS_ORIGINS is empty or not set
-    origins = ["http://localhost:3210"] # Default from breakdown
-
+# Configure CORS - allow all origins for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],    # dev: allow all, tighten later if needed
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include OpenAI compatible router
+app.include_router(echo_router)
 
 logger.info("FastAPI application starting up...")
 
@@ -70,6 +67,57 @@ async def upload(file: UploadFile = File(...)):
     # Return filename without .pdf extension, as per breakdown
     response = {"pdf_name": filename[:-4]}
     logger.info(f"POST /api/upload returning: {response}")
+    return response
+
+
+# OpenAI-compatible PDF upload endpoint for Open WebUI
+@app.post("/api/v1/files/")
+async def upload_openai_compatible(file: UploadFile = File(...), process: bool = True):
+    logger.info(f"POST /api/v1/files/ endpoint called with filename: {file.filename}, process={process}")
+    # Reuse existing upload logic
+    abs_files_dir = os.path.abspath(files_dir)
+    os.makedirs(abs_files_dir, exist_ok=True)
+    filename = os.path.basename(file.filename)
+    
+    # Generate a unique ID instead of using filename
+    file_id = hashlib.md5(f"{filename}-{datetime.datetime.now().isoformat()}".encode()).hexdigest()[:16]
+    
+    if not filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
+
+    dst = os.path.join(abs_files_dir, filename)
+    logger.info(f"Attempting to save file to: {dst}")
+
+    try:
+        with open(dst, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+        logger.info(f"Successfully saved file: {dst}")
+    except Exception as e:
+         logger.error(f"Failed to save file {dst}: {e}", exc_info=True)
+         raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
+    finally:
+        file.file.close()
+
+    filesize = os.path.getsize(dst)
+    current_time = int(datetime.datetime.utcnow().timestamp())
+    
+    # Enhanced response format matching Open WebUI's expected schema
+    response = {
+        "id": file_id,
+        "user_id": "local-user",
+        "hash": file_id,
+        "filename": filename,
+        "data": {},
+        "meta": {
+            "name": filename,
+            "content_type": "application/pdf",
+            "size": filesize
+        },
+        "created_at": current_time,
+        "updated_at": current_time
+    }
+    
+    logger.info(f"POST /api/v1/files/ returning: {response}")
     return response
 
 
