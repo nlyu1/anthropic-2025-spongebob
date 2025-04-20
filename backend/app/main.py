@@ -3,11 +3,13 @@ import os
 import json
 import asyncio
 import logging # Import logging
-from typing import List, Optional, Dict, Any # Added typing imports
+from typing import List, Optional, Dict, Any, AsyncGenerator
+import uuid, datetime
 from fastapi import FastAPI, UploadFile, File, Request, HTTPException
-from fastapi.responses import PlainTextResponse # Added PlainTextResponse
+from fastapi.responses import PlainTextResponse, StreamingResponse # Added PlainTextResponse and StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel # Added pydantic
+from starlette.background import BackgroundTask
 
 from .orchestrator import MCPClient
 from .settings import cors_origins, files_dir
@@ -30,6 +32,14 @@ class BenchmarkRequest(BaseModel):
     pdf_files: Optional[List[str]] = None
     max_rounds: Optional[int] = None # Added max_rounds
 
+# OpenAI‑style chat completion request (streaming supported)
+class ChatCompletionRequest(BaseModel):
+    messages: List[Dict[str, Any]]
+    claude_args: Optional[Dict[str, Any]] = None
+    pdf_root: Optional[str] = None
+    pdf_files: Optional[List[str]] = None
+    max_rounds: Optional[int] = None
+    stream: Optional[bool] = True
 
 # Configure CORS
 origins = [
@@ -86,43 +96,6 @@ async def upload(file: UploadFile = File(...)):
     response = {"pdf_name": filename[:-4]}
     logger.info(f"POST /api/upload returning: {response}")
     return response
-
-
-@app.post("/api/chat")
-async def chat_endpoint(req: Request):
-    logger.info("POST /api/chat endpoint called")
-    body = None
-    try:
-        body = await req.json()
-        logger.info(f"[DEBUG] Received chat request: {body}")
-        if "messages" not in body or not isinstance(body["messages"], list) or not body["messages"]:
-             logger.warning("Invalid request body format in /api/chat")
-             raise HTTPException(status_code=400, detail="Invalid request body: 'messages' field is missing, not a list, or empty.")
-    except json.JSONDecodeError:
-        logger.error("Failed to decode JSON body in /api/chat")
-        raise HTTPException(status_code=400, detail="Invalid JSON body.")
-    except Exception as e:
-        logger.error(f"Error processing request body in /api/chat: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=f"Error processing request: {e}")
-
-    # Define default claude_args locally
-    default_claude_args = {'model': 'claude-3-7-sonnet-latest', 'max_tokens': 5000}
-    client = MCPClient(claude_args=default_claude_args) # Pass default args
-
-    try:
-        await client.connect_to_server('./mcp_server/server.py')
-        # MCPClient's process_query uses its own defaults for pdf_root and pdf_files if not passed
-        response = await client.process_query(body["messages"])
-        await client.cleanup()
-        # logger.info(f"[DEBUG] Chat response: {response}")
-        # Return the raw response text for standard chat
-        return PlainTextResponse(content=response)
-    except Exception as e:
-        logger.error(f"Error in chat loop: {e}", exc_info=True)
-        if client and client.session: # Attempt cleanup if client exists
-            await client.cleanup()
-        raise HTTPException(status_code=500, detail=f"Error in chat loop: {e}")
-
 
 @app.post("/benchmark")
 async def benchmark_endpoint(request_data: BenchmarkRequest):
@@ -189,3 +162,91 @@ async def benchmark_endpoint(request_data: BenchmarkRequest):
             await client.cleanup()
         # Return a 500 error for internal server issues
         raise HTTPException(status_code=500, detail=f"Error during benchmark processing: {e}")
+
+# ---------------------------------------------------------------------------
+# Streaming chat endpoint (OpenAI compatible)
+# ---------------------------------------------------------------------------
+
+async def _openai_stream_payload(generator: AsyncGenerator[str, None]):
+    """Wrap raw text tokens from ``MCPClient.stream_query`` into minimal
+    OpenAI‑style SSE JSON payloads (one per yielded token)."""
+    chunk_id = str(uuid.uuid4())
+    created = int(datetime.datetime.utcnow().timestamp())
+    async for token in generator:
+        payload = {
+            "id": chunk_id,
+            "object": "chat.completion.chunk",
+            "created": created,
+            "choices": [
+                {
+                    "delta": {"content": token},
+                    "index": 0,
+                    "finish_reason": None,
+                }
+            ],
+            "model": "claude-3-7-sonnet-latest",
+        }
+        yield f"data: {json.dumps(payload)}\n\n"
+
+    # When exhausted, send the termination message per OpenAI protocol
+    yield "data: [DONE]\n\n"
+
+
+@app.post("/v1/chat/completions")
+async def chat_completions(request_data: ChatCompletionRequest):
+    """OpenAI compatible streaming chat completions endpoint."""
+    logger.info("POST /v1/chat/completions called")
+
+    # Defaults
+    default_claude_args = {"model": "claude-3-7-sonnet-latest", "max_tokens": 5000}
+    claude_args = request_data.claude_args or default_claude_args
+
+    client = MCPClient(claude_args=claude_args)
+
+    try:
+        # Get the loop *before* potentially entering a different task context
+        loop = asyncio.get_running_loop()
+
+        await client.connect_to_server('./mcp_server/server.py')
+
+        # Choose streaming or non‑streaming
+        if request_data.stream:
+            gen = client.stream_query(
+                messages=request_data.messages,
+                pdf_root=request_data.pdf_root or "./files",
+                pdf_files=request_data.pdf_files,
+                max_rounds=request_data.max_rounds or 10,
+            )
+
+            # Wrap generator into OpenAI payload SSE
+            async def event_generator():
+                try:
+                    async for chunk in _openai_stream_payload(gen):
+                        yield chunk.encode()
+                finally:
+                    # Ensure cleanup runs in the same event‑loop that
+                    # created the MCP connection to avoid cross‑loop errors.
+                    # Schedule cleanup on the original loop
+                    loop.call_soon_threadsafe(lambda: asyncio.create_task(client.cleanup()))
+
+            return StreamingResponse(
+                event_generator(),
+                media_type="text/event-stream",
+                headers={"X-Accel-Buffering": "no"},  # disable proxy buffering
+            )
+        else:
+            # Fallback to blocking process_query
+            text = await client.process_query(
+                messages=request_data.messages,
+                pdf_root=request_data.pdf_root or "./files",
+                pdf_files=request_data.pdf_files,
+                max_rounds=request_data.max_rounds or 10,
+            )
+            await client.cleanup()
+            return PlainTextResponse(content=text)
+
+    except Exception as e:
+        logger.error(f"Error in chat_completions: {e}", exc_info=True)
+        if client and client.session:
+            await client.cleanup()
+        raise HTTPException(status_code=500, detail=str(e))

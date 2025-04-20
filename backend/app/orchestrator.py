@@ -1,7 +1,7 @@
 import asyncio
 import os
 import logging # Import logging
-from typing import Optional
+from typing import Optional, List, Dict, Any, AsyncGenerator
 from contextlib import AsyncExitStack
 import base64, glob
 
@@ -30,45 +30,55 @@ class MCPClient:
         self.anthropic = Anthropic(api_key=key)
         self.claude_args = claude_args
 
+    # ------------------------------------------------------------------
+    # Helper utilities
+    # ------------------------------------------------------------------
+    def _prepare_messages(self,
+                          messages: list,
+                          pdf_root: str = "./files",
+                          pdf_files=None) -> list:
+        """Return a *new* messages list where the last user message has
+        its original content (string or blocks) **plus** any PDF blocks
+        loaded via ``load_pdf_as_blocks``.
+
+        The logic is identical to what ``process_query`` previously
+        implemented inline. Extracting it here lets both ``process_query``
+        and the new ``stream_query`` share exactly the same behaviour
+        without duplicating code.
+        """
+        if not messages:
+            raise ValueError("messages list cannot be empty")
+
+        last = messages[-1]
+        if last.get("role") != "user":
+            raise ValueError("Last message must be from the user")
+
+        # ---- merge original text blocks with PDF blocks --------------
+        # Original user content might be a plain string or already a list
+        original_content = last["content"]
+        if not isinstance(original_content, list):
+            original_blocks = [{"type": "text", "text": original_content}]
+        else:
+            # Make a shallow copy so we don't mutate the caller's data
+            original_blocks = original_content.copy()
+
+        pdf_blocks = load_pdf_as_blocks(pdf_root, pdf_files)
+
+        new_last = {
+            "role": "user",
+            "content": [*original_blocks, *pdf_blocks],
+        }
+
+        return [*messages[:-1], new_last]
+
     async def process_query(self, messages: list, pdf_root="./files", pdf_files=None, max_rounds=10) -> str:
         """
         pdf_root: where to look for pdf's
         pdf_files: which pdf files to parse & add to conversation. By default, everything in the folder is added 
         max_rounds: maximum rounds of internal conversation iteration Claude can call (i.e. number of round trips between Anthropic and local MCP server)
         """
-        last_message = messages[-1]
-        # logger.info(f"[INFO/Orchestrator]: last message {last_message}")
-        if last_message["role"] != "user":
-            # Last message should be of type 
-            logger.error(f"[ERROR/Orchestrator] Last message is not a user message")
-            raise ValueError("Last message is not a user message")
-        
-        # Prepare the content list from the last user message
-        content_list = []
-        if not isinstance(last_message["content"], list):
-            # Assume it's a simple string, convert to text block
-            content_list = [{'type': 'text', 'text': last_message['content']}]
-            # print('    DEBUG: last_message["content"] is not a list, creating list with text block')
-        else:
-            # It's already a list, make a copy
-            content_list = last_message['content'].copy()
-            # print('    DEBUG: last_message["content"] is a list, copying')
-
-        # Load and add PDF blocks
-        pdf_blocks = load_pdf_as_blocks(pdf_root, pdf_files)
-        content_list.extend(pdf_blocks)
-        # print(f'    DEBUG: Extended content list length: {len(content_list)}')
-
-        # Create the new last message with the combined content
-        new_last_message = {
-            'role': 'user',
-            'content': content_list
-        }
-        
-        # Replace the last message in the list
-        messages = messages[:-1] + [new_last_message]
-        # print(f'\n\nOld last message\n{last_message}\n\n\n')
-        # print(f'\n\nNew last message\n{new_last_message}\n\n\n')
+        # Build conversation identical to original logic
+        messages = self._prepare_messages(messages, pdf_root, pdf_files)
         response = await self.session.list_tools()
         available_tools = [{ 
             "name": tool.name,
@@ -200,6 +210,196 @@ class MCPClient:
     async def cleanup(self):
         """Clean up resources"""
         await self.exit_stack.aclose()
+
+    # ------------------------------------------------------------------
+    # Streaming version that yields assistant tokens in real‑time
+    # ------------------------------------------------------------------
+    async def stream_query(
+        self,
+        messages: List[Dict[str, Any]],
+        pdf_root: str = "./files",
+        pdf_files=None,
+        max_rounds: int = 10,
+    ) -> AsyncGenerator[str, None]:
+        """Stream assistant tokens **while preserving** the full
+        ``process_query`` logic (PDF injection, tool‑calls, multi‑round
+        reasoning).
+
+        The implementation follows these steps:
+        1. Build a conversation identical to :py:meth:`process_query` via
+           :py:meth:`_prepare_messages`.
+        2. Enter a *while* loop (bounded by ``max_rounds``) where we make
+           a streaming Claude call (``stream=True``).
+        3. For every ``text_delta`` chunk coming back we immediately
+           ``yield`` it to the caller **and** accumulate it in
+           ``assistant_blocks`` so it becomes part of the conversation
+           context for any further calls.
+        4. If, instead of text, Claude emits a ``tool_use`` delta we:
+           a. Execute the tool via the MCP session.
+           b. Close out the assistant turn constructed so far
+              (including the ``tool_use`` block).
+           c. Append a *user* message with the tool result.
+           d. Break the *async‑for* loop to start **another** streaming
+              request, thereby emulating the recursive behaviour of the
+              non‑streaming ``process_query``.
+        5. If the stream ends *without* any tool calls we consider the
+           task done and return, terminating the generator.
+        """
+
+        # ---- 0. prepare conversation identical to process_query -------
+        running_messages: List[Dict[str, Any]] = self._prepare_messages(
+            messages, pdf_root, pdf_files
+        )
+
+        # Cache available tools once per outer call
+        tools_response = await self.session.list_tools()
+        available_tools = [
+            {
+                "name": t.name,
+                "description": t.description,
+                "input_schema": t.inputSchema,
+            }
+            for t in tools_response.tools
+        ]
+
+        rounds_left = max_rounds
+
+        # ----------------------------------------------------------------
+        # Main reasoning loop                                             |
+        # ----------------------------------------------------------------
+        while rounds_left > 0:
+            rounds_left -= 1
+
+            # Keep track of content blocks that will form the assistant
+            assistant_blocks: List[Dict[str, Any]] = []
+
+            # ---- 1. make streaming request to Claude ------------------
+            stream = self.anthropic.messages.create(
+                messages=running_messages,
+                tools=available_tools,
+                tool_choice={"type": "any"},
+                stream=True,
+                **self.claude_args,
+            )
+
+            # The Anthropic SDK stream object is a synchronous iterator
+            # even when called from async code. Iterate over it with a
+            # normal *for* loop inside this async function.
+            for delta in stream:
+                dtype = getattr(delta, "type", None)
+
+                # 1.a) Text token events --------------------------------
+                if dtype in {"text_delta", "text", "content_block_delta"}:
+                    #  Different SDK versions expose text in different ways.
+                    token: str | None = getattr(delta, "text", None)
+
+                    # Newer SDKs wrap text inside a `delta` model that has a
+                    # `.text` attribute (not a dict). Guard accordingly.
+                    if token is None and hasattr(delta, "delta"):
+                        inner_delta = getattr(delta, "delta")
+                        token = getattr(inner_delta, "text", None)
+
+                    if token is None:
+                        token = ""
+                    if token:
+                        # forward to client immediately
+                        yield token
+
+                        # accumulate into assistant_blocks for context
+                        if assistant_blocks and assistant_blocks[-1]["type"] == "text":
+                            assistant_blocks[-1]["text"] += token
+                        else:
+                            assistant_blocks.append({"type": "text", "text": token})
+
+                # 1.b) Tool‑call ----------------------------------------
+                elif dtype in {"tool_use", "content_block_start"} and getattr(delta, "name", None):
+                    # Record the tool_use block exactly as received so
+                    # that the assistant message we store later mirrors
+                    # Claude's output.
+                    tool_name = getattr(delta, "name", None)
+                    tool_args = getattr(delta, "input", None)
+
+                    if tool_name is None or tool_args is None:
+                        # Not actually a tool use; ignore.
+                        continue
+
+                    assistant_blocks.append(
+                        {
+                            "type": "tool_use",
+                            "id": getattr(delta, "id", None),
+                            "name": tool_name,
+                            "input": tool_args,
+                        }
+                    )
+
+                    logger.info(
+                        f"[stream_query] Executing tool '{tool_name}' with args {tool_args}"
+                    )
+
+                    # Emit an informative marker token so the client is
+                    # aware that a tool is being called. This mirrors the
+                    # behaviour of the non‑streaming `process_query` which
+                    # inserts `[Calling tool ...]` into the final text.
+                    placeholder = f"[Calling tool {tool_name} with args {tool_args}]"
+                    yield placeholder
+                    if assistant_blocks and assistant_blocks[-1]["type"] == "text":
+                        assistant_blocks[-1]["text"] += placeholder
+                    else:
+                        assistant_blocks.append({"type": "text", "text": placeholder})
+
+                    # ----------------------------------------------------------------
+                    # Execute tool via MCP
+                    try:
+                        tool_result = await self.session.call_tool(tool_name, tool_args)
+                        tool_return_content = tool_result.content[0]
+                        tool_result_text = (
+                            getattr(tool_return_content, "text", str(tool_return_content))
+                            if tool_return_content is not None
+                            else ""
+                        )
+                    except Exception as exc:
+                        logger.error(
+                            f"Tool '{tool_name}' failed: {exc}", exc_info=True
+                        )
+                        tool_result_text = f"[Tool error: {exc}]"
+
+                    # ----------------------------------------------------------------
+                    # Close current assistant turn and append tool result
+                    running_messages.append(
+                        {"role": "assistant", "content": assistant_blocks}
+                    )
+
+                    running_messages.append(
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "tool_result",
+                                    "tool_use_id": getattr(delta, "id", None),
+                                    "content": tool_result_text,
+                                }
+                            ],
+                        }
+                    )
+
+                    # Break out of current stream to initiate the next
+                    # round (if any) *after* the async-for loop.
+                    break
+
+            else:
+                # The for‑loop exhausted *without* a break, meaning we
+                # reached the end of the stream and there were **no**
+                # tool calls in this round. We thus finalise the
+                # assistant message and terminate the generator.
+                running_messages.append(
+                    {"role": "assistant", "content": assistant_blocks}
+                )
+                return  # End of generator – implicit StopAsyncIteration
+
+            # Loop continues when a tool_use was encountered -------------
+
+        # Reached round limit – quietly stop
+        return
 
 # async def main():
 #     if len(sys.argv) < 2:

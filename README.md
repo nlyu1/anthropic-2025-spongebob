@@ -67,7 +67,7 @@ Follow these steps to set up and run the backend server.
     cd benchmarking # Or cd ../benchmarking if you are in backend/
     python benchmark_wrapper.py
     ```
-    *(This requires the backend server to be running and uses dependencies installed via `uv pip install .[dev]`)*
+    *(This requires the backend server to be running and uses dependencies installed via `uv pip install .`)*
 
 ## Project Structure
 
