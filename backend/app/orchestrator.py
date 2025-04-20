@@ -1,126 +1,204 @@
 import asyncio
-import json
-from anthropic import AsyncAnthropic
+import os
+import logging # Import logging
+from typing import Optional
+from contextlib import AsyncExitStack
+import base64, glob
 
-# Import the search_pdf function and the mcp object (for schema) from tools
-from .tools.pdf_search import mcp, search_pdf
-# Import specific variables needed from settings module
-from .settings import anthropic_api_key, files_dir
+FILES_DIR = './files'
 
-# Initialize Anthropic client using the key from settings
-# Handle potential missing key gracefully (though BaseSettings usually requires it)
-try:
-    client = AsyncAnthropic(api_key=anthropic_api_key)
-except Exception as e:
-    print(f"Error initializing Anthropic client: {e}")
-    # Decide how to handle this - raise error, use a dummy client, etc.
-    # For now, we'll let it potentially fail later if client is used without key.
-    client = None # Or some placeholder if needed
+MAX_INLINE_MB = 10     # keep token usage reasonable
 
-# Get the tool schema from the mcp object
-tool_descriptor = None
-if hasattr(mcp, 'describe') and callable(mcp.describe):
-    try:
-        description = mcp.describe()
-        if description and description.get("tools"):
-            tool_descriptor = description["tools"][0] # Assumes search_pdf is the first/only tool
-        else:
-            print("Warning: MCP description format unexpected or empty.")
-    except Exception as e:
-        print(f"Error getting tool description from MCP: {e}")
+def load_pdf_as_block() -> list[dict]:
+    """Return a list of {'type':'document', ...} blocks for each PDF in ./files.
+    
+    PROBLEMATIC: only parses one pdf. """
+    blocks: list[dict] = []
 
-if not tool_descriptor:
-    print("Error: Could not obtain tool descriptor for search_pdf. Tool use will likely fail.")
-    # Define a fallback or raise an error if the descriptor is critical
-    # tool_descriptor = { ... manual schema ... }
+    logger.info(f'[INFO / Orchestrator / load_pdf_as_block] Loading PDF files from {os.path.abspath(FILES_DIR)}, available files: {glob.glob(f"{FILES_DIR}/*.pdf")}')
+    for path in glob.glob(f"{FILES_DIR}/*.pdf"):
+        size_mb = os.path.getsize(path) / 1_048_576
+        if size_mb > MAX_INLINE_MB:
+            print(f"⚠️  Skipping {os.path.basename(path)} – {size_mb:.1f} MB > {MAX_INLINE_MB} MB inline limit")
+            continue
 
-SYSTEM = """You are an expert research assistant.
-When sourcing facts from PDFs, call the search_pdf tool first before answering.
-Use the search results to provide accurate and concise answers based *only* on the provided document content.
-If the document doesn't contain the answer, state that explicitly.
-"""
+        with open(path, "rb") as f:
+            b64_pdf = base64.b64encode(f.read()).decode()
 
-async def chat_with_tools(messages: list[dict]):
-    """Handles the chat logic, calling Claude with the search_pdf tool."""
-    if not client:
-         # Handle the case where the client failed to initialize
-         yield {"type": "error", "error": {"message": "Anthropic client not available."}}
-         return
-    if not tool_descriptor:
-         yield {"type": "error", "error": {"message": "PDF search tool schema not available."}}
-         return
+        pdf_b64_block = {
+            "type": "document",
+            "source": {
+                "type": "base64",
+                "media_type": "application/pdf",
+                "data": b64_pdf
+            }
+        }
+    return pdf_b64_block
 
-    try:
-        stream = await client.messages.create(
-            model="claude-3-haiku-20240307", # Or sonnet, as in breakdown
-            system=SYSTEM,
-            tools=[tool_descriptor],
-            messages=messages,
-            stream=True,
-            max_tokens=1024
+
+debug = True
+
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+from anthropic import Anthropic
+from dotenv import load_dotenv
+
+load_dotenv()  # load environment variables from .env
+
+key = os.getenv("ANTHROPIC_API_KEY")
+if not key:
+    raise RuntimeError("ANTHROPIC_API_KEY not set in .env file or environment.")
+
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+logger = logging.getLogger(__name__)
+
+class MCPClient:
+    def __init__(self):
+        # Initialize session and client objects
+        self.session: Optional[ClientSession] = None
+        self.exit_stack = AsyncExitStack()
+        self.anthropic = Anthropic(api_key=key)
+
+    async def connect_to_server(self, server_script_path: str):
+        """Connect to an MCP server
+        
+        Args:
+            server_script_path: Path to the server script (.py or .js)
+        """
+        is_python = server_script_path.endswith('.py')
+        is_js = server_script_path.endswith('.js')
+        if not (is_python or is_js):
+            raise ValueError("Server script must be a .py or .js file")
+            
+        command = "python" if is_python else "node"
+        print(f'Connecting to server with command: {command} {server_script_path}')
+        server_params = StdioServerParameters(
+            command=command,
+            args=[server_script_path],
+            env=None
         )
-        async for part in stream:
-            # Very basic streaming implementation for now
-            # Follows the logic from breakdown.md
-            if part.type == "content_block_delta":
-                yield {"type": "content_block_delta", "delta": {"text": part.delta.text}}
-            elif part.type == "message_delta":
-                 # Yield stop reason etc if needed
-                 yield {"type": "message_delta", "delta": {"stop_reason": part.delta.stop_reason}}
-            elif part.type == "tool_use":
-                tool_name = part.input.get('name')
-                tool_input = part.input.get('input', {})
-                tool_use_id = part.id
+        stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
+        self.stdio, self.write = stdio_transport
+        logger.info('Creating session')
+        self.session = await self.exit_stack.enter_async_context(ClientSession(self.stdio, self.write))
+        print('[Orchestrator / INFO] Initializing session', self.session)
+        await self.session.initialize()
+        # List available tools
+        response = await self.session.list_tools()
+        tools = response.tools
+        print("\n[Orchestrator / INFO]: Connected to server with tools:", [tool.name for tool in tools])
 
-                yield {"type": "tool_use", "id": tool_use_id, "name": tool_name, "input": tool_input}
+    async def process_query(self, messages: list) -> str:
+        """Process a query using Claude and available tools"""
+        response = await self.session.list_tools()
+        doc_block = load_pdf_as_block()
+        messages = messages + [{"role": "user", "content": [doc_block]}]
 
-                if tool_name == 'search_pdf':
-                     # Run the tool in a worker thread – non-blocking
-                     # Pass the imported files_dir explicitly
-                    result_dict = await asyncio.to_thread(search_pdf,
-                                                        # Use imported files_dir
-                                                        files_dir_override=files_dir,
-                                                        **tool_input)
-                    result_content = json.dumps(result_dict)
+        available_tools = [{ 
+            "name": tool.name,
+            "description": tool.description,
+            "input_schema": tool.inputSchema
+        } for tool in response.tools]
+        # print('[INFO] Available tools:', available_tools)
+        # logger.info(f'[INFO / Orchestrator / process_query] processing query')
+        # Initial Claude API call
+        response = self.anthropic.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=5000,
+            messages=messages,
+            tools=available_tools
+        )
+        
+        # Process response and handle tool calls
+        tool_results, final_text = [], []
+        running_messages = [m for m in messages]
+        compute_types = lambda response: [content.type for content in response.content]
+        for i in range(20):
+            has_tool_calls = False 
+            append_messages = []
+            logger.info(f'[INFO / Orchestrator / process_query]\n    Processing response #{i} of type: {compute_types(response)}')
+            for content in response.content:
+                if content.type == 'text':
+                    logger.info(f'    APPENDING TEXT FROM OUTPUT: \n\n\n{content.text}\n\n\n')
+                    final_text.append(content.text)
+                    append_messages.append({
+                        "role": "assistant",
+                        "content": content.text
+                    })
+                elif content.type == 'tool_use':
+                    has_tool_calls = True 
+                    tool_name = content.name
+                    tool_args = content.input
 
-                    # Add tool result message back to the conversation history
-                    messages.append({
-                         "role": "user",
-                         "content": [
-                             {
-                                 "type": "tool_result",
-                                 "tool_use_id": tool_use_id,
-                                 "content": result_content,
-                                 # Include error status if present in result_dict
-                                 "is_error": "error" in result_dict
-                             }
-                         ]
-                     })
+                    # Execute tool call 
+                    result = await self.session.call_tool(tool_name, tool_args)
+                    # print('TOOL RESULT:', result)
+                    tool_results.append({"call": tool_name, "result": result}) 
+                    final_text.append(f"[Calling tool {tool_name} with args {tool_args}]")
+                    # Add tool-call response to a running queue of messages 
+                    if hasattr(content, 'text') and content.text:
+                        append_messages.append({
+                        "role": "assistant",
+                        "content": content.text
+                        })
+                    append_messages.append({
+                        "role": "user", 
+                        "content": result.content
+                    })
+            if not has_tool_calls:
+                break 
+            # After all tool calls have been made, make another API call to claude 
+            running_messages = running_messages + append_messages
+            response = self.anthropic.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=5000,
+                messages=running_messages,
+                tools=available_tools
+            )
+        print(messages)
+        final_text = "\n".join(final_text)
+        logger.info(f'[INFO] FINAL_TEXT: \n\n\n{final_text}\n\n\n')
+        return final_text
 
-                     # Recurse: Feed result back to Claude for the next turn
-                    async for delta in chat_with_tools(messages):
-                        yield delta
-                    return # Stop the outer generator after recursion finishes
-                else:
-                    # Handle unknown tool or potentially yield an error message
-                    print(f"Warning: Received request for unhandled tool: {tool_name}")
-                    # You might want to yield a specific error message back
+    async def chat_loop(self):
+        """Run an interactive chat loop"""
+        print("\nMCP Client Started!")
+        print("Type your queries or 'quit' to exit.")
+        
+        while True:
+            try:
+                query = input("\nQuery: ").strip()
+                
+                if query.lower() == 'quit':
+                    break
+                
+                # Format the raw query string into the expected message list structure
+                user_message = [{"role": "user", "content": query}]
+                response = await self.process_query(user_message)
+                print("\n" + response)
+                    
+            except Exception as e:
+                print(f"\nError: {str(e)}")
+    
+    async def cleanup(self):
+        """Clean up resources"""
+        await self.exit_stack.aclose()
 
-            # Yield other event types if needed (e.g., message_start, message_stop)
-            elif part.type == "message_start":
-                yield {"type": "message_start", "message": part.message.to_dict()}
-            elif part.type == "message_stop":
-                yield {"type": "message_stop"}
-            else:
-                 print(f"Received unhandled stream part type: {part.type}")
+# async def main():
+#     if len(sys.argv) < 2:
+#         print("Usage: python client.py <path_to_server_script>")
+#         sys.exit(1)
+        
+#     client = MCPClient()
+#     try:
+#         print('Trying to connect to server')
+#         await client.connect_to_server(sys.argv[1])
+#         print('Connected to server')
+#         await client.chat_loop()
+#     finally:
+#         await client.cleanup()
 
-    except Exception as e:
-        print(f"Error during Claude API call or processing: {e}")
-        # Yield a structured error event to the client
-        yield {"type": "error", "error": {"message": f"Chat processing failed: {e}"}}
-
-# Example of a simple placeholder if needed
-# async def chat_with_tools(messages: list[dict]):
-#     print("Orchestrator called with messages:", messages)
-#     yield {"type": "content_block_delta", "delta": {"text": " Placeholder response."}}
-#     await asyncio.sleep(0.1)
+# if __name__ == "__main__":
+#     import sys
+#     asyncio.run(main())

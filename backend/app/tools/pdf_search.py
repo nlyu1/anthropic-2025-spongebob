@@ -5,12 +5,9 @@ from typing import Dict, List, Any, Optional
 
 from pdfminer.high_level import extract_text_to_fp
 from pdfminer.layout import LAParams
-from mcp.server.fastmcp import FastMCP
+from ..mcp_instance import mcp # Assuming central instance is at app.mcp_instance
 
 from .. import settings # Import settings module
-
-# Instantiate FastMCP
-mcp = FastMCP("pdf_tools")
 
 @mcp.tool()
 def search_pdf(

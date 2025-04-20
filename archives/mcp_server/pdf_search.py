@@ -40,7 +40,6 @@ def search_pdf_content(
         "matches": [],
         "error": None,
     }
-
     if not os.path.exists(pdf_path):
         result["error"] = f"File not found: {pdf_path}"
         return result

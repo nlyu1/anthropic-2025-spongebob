@@ -17,7 +17,7 @@ EXPECTED_PDF_NAME = "trial"
 # Assumes script is run from backend/ directory.
 # Server saves to files_dir which defaults to ../files relative to backend/app,
 # meaning it saves to backend/files/.
-UPLOAD_DIR_RELATIVE_TO_BACKEND = "../files"
+UPLOAD_DIR_RELATIVE_TO_BACKEND = "./files"
 TARGET_PDF_FILENAME = "trial.pdf"
 # Construct absolute path based on CWD (assumed to be backend/)
 TARGET_PDF_PATH_ABS = os.path.abspath(
@@ -26,6 +26,8 @@ TARGET_PDF_PATH_ABS = os.path.abspath(
 
 # Source PDF path relative to backend/ directory
 SOURCE_PDF_PATH_REL = os.path.join("tests", "trial.pdf")
+print(f"SOURCE_PDF_PATH_REL: {SOURCE_PDF_PATH_REL}")
+print(f"TARGET_PDF_PATH_ABS: {TARGET_PDF_PATH_ABS}")
 # ---------------------
 
 def cleanup_target_file():

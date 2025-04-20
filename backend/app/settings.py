@@ -9,7 +9,7 @@ load_dotenv(dotenv_path=dotenv_path)
 
 # Access environment variables using os.getenv
 cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3210") # Default value if not set
-files_dir = os.getenv("FILES_DIR", "../files") # Default relative path to files dir
+files_dir = os.getenv("FILES_DIR", "./files") # Default relative path to files dir
 anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
 
 # You can add validation or type casting here if needed

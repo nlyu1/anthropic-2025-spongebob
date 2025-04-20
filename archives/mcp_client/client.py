@@ -73,7 +73,7 @@ class MCPClient:
             "input_schema": tool.inputSchema
         } for tool in response.tools]
         print('[INFO] Available tools:', available_tools)
-
+        print('[DEBUG/DEBUG] messages:', messages)
         # Initial Claude API call
         response = self.anthropic.messages.create(
             model="claude-3-5-sonnet-20241022",
