@@ -1,4 +1,4 @@
-# Claude Trusted: OpenWebUI with Claude-Powered PDF Search & Citation
+# Claude Trusted: OpenWebUI with Claude-Powered PDF Search & Citation [Determinstic Verification Enhancement w/ MCP]
 
 > Our custom MCP-powered verification workflow ensures Claude cites real evidence, reducing error rates on PDFs
 
