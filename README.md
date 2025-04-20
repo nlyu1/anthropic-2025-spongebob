@@ -1,175 +1,196 @@
-# anthropic-2025-spongebob
+# anthropic-2025-spongebob: OpenWebUI with Claude-Powered PDF Search
 
-This project integrates a backend service with a chat interface (like LobeChat) to enable conversations augmented by PDF document search using Anthropic's Claude model and the MCP protocol for tool use.
+This project enhances the [Open WebUI](https://github.com/open-webui/open-webui) chat interface by integrating a custom backend service. This backend leverages Anthropic's Claude model and the Message Correlation Protocol (MCP) to enable intelligent conversations augmented by reliable PDF document search and citation capabilities.
 
-## Quick Start
+## Core Features
 
-Follow these steps to set up and run the backend server.
+*   **Enhanced Chat Interface:** Utilizes the feature-rich Open WebUI frontend.
+*   **PDF Upload:** Allows users to upload PDF documents directly through the chat interface.
+*   **Contextual PDF Search:** Enables users to ask questions about uploaded PDFs within their chat conversation.
+*   **Claude Integration:** Uses Anthropic's Claude models for powerful language understanding and generation.
+*   **Reliable Citations:** Employs MCP tools to interact with PDFs, aiming for accurate information retrieval and citation from the documents.
+
+## Tech Stack
+
+**Backend:**
+
+*   **Programming Language:** Python 3.10+
+*   **Web Framework:** FastAPI
+*   **Server:** Uvicorn
+*   **LLM API:** Anthropic Python SDK
+*   **Tool Protocol:** MCP (`mcp` library)
+*   **PDF Processing:** PyMuPDF (`fitz`), `pdfminer.six` (Note: `pdfminer.six` seems included in dependencies but `PyMuPDF` is used in `pdf_search.py`)
+*   **Configuration:** Pydantic Settings, python-dotenv
+*   **Package/Environment Management:** `uv`
+*   **Other:** OpenAI Python SDK (optional, used within `pdf_search.py` for specific search methods), `httpx`, `sse-starlette`
+
+**Frontend (`front-test/` directory):**
+
+*   **Framework:** SvelteKit
+*   **Language:** TypeScript
+*   **Styling:** Tailwind CSS
+*   **Build Tool:** Vite
+*   **Package Management:** npm
+*   **UI Components:** Various libraries including Bits UI, Tippy.js, Katex, Mermaid, etc. (inherited from OpenWebUI)
+
+## Project Structure
+
+```
+root/
+│
+├── README.md                ← This file
+├── breakdown.md             ← Initial architectural plan (current implementation differs)
+├── files/                   ← Default storage location for uploaded PDFs
+│
+├── frontend/ (or front-test/) ← OpenWebUI frontend code (SvelteKit)
+│   ├── src/
+│   ├── package.json
+│   └── .env.local           ← Frontend configuration (needs creation)
+│
+├── backend/                 ← FastAPI backend application
+│   ├── app/                 ← Core FastAPI application package
+│   │   ├── __init__.py
+│   │   ├── main.py          ← FastAPI app setup, CORS, API endpoint definitions
+│   │   ├── frontend_router.py ← Defines `/v1/*` API routes for OpenWebUI compatibility
+│   │   ├── orchestrator.py  ← Manages Claude API interaction, MCP client logic, PDF loading
+│   │   ├── pdf_loading_utils.py ← Helpers for loading PDF content for Claude context
+│   │   └── settings.py      ← Pydantic models for loading .env configuration
+│   │
+│   ├── mcp_server/          ← Separate process running the MCP tool server
+│   │   ├── server.py        ← Runs the MCP server exposing the pdf_search tool
+│   │   ├── pdf_search.py    ← Implements the actual PDF search logic (using PyMuPDF)
+│   │   └── pyproject.toml   ← Dependencies specific to the MCP server process
+│   │
+│   ├── tests/               ← Backend tests
+│   ├── pyproject.toml       ← Main backend dependencies (managed by uv)
+│   └── uv.lock              ← Backend lock file
+│
+├── .env                     ← Root environment configuration (needs creation)
+├── .gitignore
+└── ... (other config files, Dockerfiles, etc.)
+```
+
+**Key Components:**
+
+*   **`frontend/` (`front-test/`):** The user interface, based on OpenWebUI. Communicates with the backend via HTTP requests.
+*   **`backend/app/main.py` & `backend/app/frontend_router.py`:** The FastAPI application entry point. Defines API routes that the frontend calls (e.g., `/api/upload`, `/v1/chat/completions`).
+*   **`backend/app/orchestrator.py`:** The core logic unit. It receives chat messages, prepares context (including loaded PDF content), interacts with the Anthropic Claude API, and acts as an MCP *client* to call tools exposed by the MCP server.
+*   **`backend/mcp_server/`:** A separate Python process acting as an MCP *server*. It exposes the `search_pdf` tool, whose implementation resides in `pdf_search.py`. This server is started and managed implicitly by the `orchestrator.py` when it needs to call the tool.
+*   **`backend/mcp_server/pdf_search.py`:** Contains the function that extracts text from PDFs (`PyMuPDF`) and performs searches based on user queries received via MCP.
+*   **`files/`:** The directory where uploaded PDF files are stored by default.
+
+## Setup and Running
 
 **Prerequisites:**
 
-*   Python 3.10+
-*   `uv`: We recommend using `uv` for environment and package management. Install it if you haven't already (e.g., `pip install uv` or follow official instructions).
+*   Python 3.10 or higher
+*   `uv` (Python package/environment manager): Install via `pip install uv` or follow official instructions.
+*   Node.js (v18.13+ recommended) and npm
 
-**Setup:**
+**Steps:**
 
-1.  **Clone the repository** (if you haven't already):
+1.  **Clone the Repository:**
     ```bash
     git clone <repository_url>
     cd anthropic-2025-spongebob
     ```
 
-2.  **Navigate to the backend directory:**
-    ```bash
-    cd backend
-    ```
-
-3.  **Create and activate a virtual environment:**
-    ```bash
-    uv venv
-    uv sync 
-    source .venv/bin/activate  # On Linux/macOS
-    # .\.venv\Scripts\activate  # On Windows PowerShell
-    ```
-
-4.  **Install dependencies:**
-    This command installs the main application dependencies and development dependencies (like `requests` needed for tests/benchmarking).
-    ```bash
-    uv pip install .
-    ```
-
-5.  **Configure Environment Variables:**
-    Create a file named `.env` in the **project root** directory (the one containing the `backend/` and `frontend/` folders). Add your Anthropic API key:
+2.  **Configure Environment Variables:**
+    Create a file named `.env` in the **project root** directory. Add your Anthropic API key:
     ```env
-    ANTHROPIC_KEY=your_anthropic_api_key_here
+    # Required: Your Anthropic API Key
+    ANTHROPIC_API_KEY=your_anthropic_api_key_here
 
     # Optional: Specify allowed origins for CORS (comma-separated)
-    # Default allows http://localhost:3210 if not set
-    # CORS_ORIGINS="http://localhost:3210,http://127.0.0.1:3210"
+    # Defaults to allowing http://localhost:3210, http://127.0.0.1:3210, http://localhost:5173 if not set
+    # CORS_ORIGINS="http://localhost:5173,http://127.0.0.1:5173"
 
     # Optional: Specify a different directory for uploaded files
-    # Defaults to 'files/' in the backend directory if not set
+    # Defaults to './backend/files/' relative to where the backend process is run
     # FILES_DIR="/path/to/your/pdf/storage"
+
+    # Optional: API Key for Fireworks AI if using LLM-based search in pdf_search.py
+    # FIREWORKS_API_KEY=your_fireworks_api_key_here
     ```
     *Note: Ensure the `.env` file is added to your `.gitignore` to avoid committing secrets.*
 
-6.  **Run the backend server:**
-    Make sure you are in the `backend/` directory with the virtual environment activated.
-    ```bash
-    uvicorn app.main:app --reload --port 8000
-    ```
-    The server should now be running at `http://localhost:8000`. You can check its status by visiting `http://localhost:8000/check` in your browser or using `curl`.
+3.  **Set Up and Run Backend:**
+    *   Navigate to the backend directory:
+        ```bash
+        cd backend
+        ```
+    *   Create and activate a virtual environment using `uv`:
+        ```bash
+        uv venv
+        source .venv/bin/activate  # Linux/macOS
+        # .\.venv\Scripts\activate  # Windows PowerShell
+        ```
+    *   Install dependencies:
+        ```bash
+        uv pip install -r requirements.txt # Or uv pip install . if using pyproject.toml directly
+        # Consider 'uv pip install .[dev]' if you need development dependencies like 'requests' for tests
+        ```
+    *   Run the FastAPI server:
+        ```bash
+        # Make sure you are in the backend/ directory with the venv activated
+        uvicorn app.main:app --reload --port 8000
+        ```
+        The backend server should now be running at `http://localhost:8000`.
 
-7.  **Run the Benchmark Script (Optional):**
-    To run the benchmark test:
-    ```bash
-    # Navigate to the benchmarking directory from the project root
-    cd benchmarking # Or cd ../benchmarking if you are in backend/
-    python benchmark_wrapper.py
-    ```
-    *(This requires the backend server to be running and uses dependencies installed via `uv pip install .[dev]`)*
+4.  **Set Up and Run Frontend:**
+    *   In a **new terminal**, navigate to the frontend directory:
+        ```bash
+        cd ../front-test # Or the correct path to your frontend directory
+        ```
+    *   Install Node.js dependencies:
+        ```bash
+        npm install
+        ```
+    *   **Configure Frontend API Endpoint:** Create a file named `.env.local` inside the `front-test` directory with the following content, pointing to your running backend:
+        ```env
+        NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/v1
+        NEXT_PUBLIC_API_KEY=dummy_key # Required by OpenWebUI, value doesn't matter for local backend
+        # Add other OpenWebUI specific env vars as needed, e.g.:
+        # ENABLE_SIGNUP=false
+        ```
+        *(Consult OpenWebUI documentation for other relevant frontend environment variables)*
+    *   Run the frontend development server:
+        ```bash
+        npm run dev
+        ```
 
-## Project Structure
+5.  **Access the Application:**
+    Open your web browser and navigate to the URL provided by the frontend process (usually `http://localhost:5173`).
 
-The project is organized into several key directories:
+## Configuration Details
 
-*   `README.md`: (This file) Top-level project overview.
-*   `breakdown.md`: Document outlining a target architecture (Note: The current implementation may differ).
-*   `files/`: Default storage location for uploaded PDF files used by the backend. (Note: The actual location is determined by `backend/app/settings.py`, which defaults to `backend/files/` unless `FILES_DIR` is set in `.env`).
-*   `frontend/`: Intended location for the chat frontend (e.g., a clone of LobeChat). See `breakdown.md` for setup details regarding `.env.local` for frontend configuration.
-*   `backend/`: Contains the FastAPI backend application.
-    *   `app/`: The core FastAPI application package.
-        *   `main.py`: Defines API endpoints (`/check`, `/api/upload`, `/api/chat`, `/benchmark`), configures CORS, and handles incoming requests. It uses `orchestrator.py` for the main chat logic.
-        *   `orchestrator.py`: Manages the interaction flow with Anthropic's Claude model. It initializes an `MCPClient`, connects to the separate MCP server process (`./mcp_server/server.py`), prepares messages (including loading PDF content via `pdf_loading_utils.py`), handles the tool execution loop with Claude, and returns the final response.
-        *   `pdf_loading_utils.py`: Contains helper functions for loading and processing PDF content to be included in the Claude prompt.
-        *   `settings.py`: Defines Pydantic models for loading configuration settings (like `ANTHROPIC_KEY`, `CORS_ORIGINS`, `FILES_DIR`) from the root `.env` file.
-    *   `mcp_server/`: **(Current Implementation Detail)** Contains the separate MCP server process that exposes the `search_pdf` tool.
-        *   `server.py`: The script that runs the MCP server using the `mcp` library. This is the process `orchestrator.py` connects to.
-        *   `pdf_search.py`: Implements the actual PDF search logic using libraries like `pdfminer.six`, `sentence-transformers`, and `numpy`. It defines the `search_pdf` tool exposed by the MCP server.
-        *   `pyproject.toml`: Defines *some* dependencies specific to the MCP server (uses Poetry). **Note:** This structure and the separate dependency file deviate from the unified approach suggested in `breakdown.md`. Ideally, dependencies should be consolidated in `backend/pyproject.toml` and the tool logic potentially integrated directly into the `backend/app/` structure.
-    *   `tests/`: Contains scripts for testing backend functionality (e.g., `test_upload.py`).
-    *   `files/`: Default directory within the backend where uploaded PDFs are stored (can be configured via `.env`).
-    *   `pyproject.toml`: The main dependency definition file for the backend application (using `hatchling`). Use `uv pip install .[dev]` to install all necessary packages.
-    *   `uv.lock`: Lock file generated by `uv`.
-    *   `README.md`: Placeholder for backend-specific documentation.
-*   `benchmarking/`: Contains scripts and resources for benchmarking the backend's performance.
-    *   `benchmark_wrapper.py`: Script to send requests to the `/benchmark` endpoint and measure performance.
-    *   `files/`: Sample PDF files potentially used by the benchmark script.
-    *   `sample_result.md`: An example of benchmark output.
+*   **`.env` (Project Root):**
+    *   `ANTHROPIC_API_KEY`: **Required** for Claude API access.
+    *   `CORS_ORIGINS`: Controls which frontend origins can access the backend API. Adjust if your frontend runs on a different port. Defaults are usually `http://localhost:5173`, `http://127.0.0.1:5173`.
+    *   `FILES_DIR`: Specifies the directory to store uploaded PDFs. Defaults to `backend/files/`.
+    *   `FIREWORKS_API_KEY`: Only needed if the LLM-based search (`find_relevant_text_llm`) within `pdf_search.py` is actively used.
+*   **`front-test/.env.local`:**
+    *   `NEXT_PUBLIC_API_BASE_URL`: **Required**. Tells the frontend where the backend API (specifically the OpenAI-compatible `/v1` endpoints) is located (e.g., `http://localhost:8000/v1`).
+    *   `NEXT_PUBLIC_API_KEY`: Required by OpenWebUI, but the value isn't used by our backend. Set to any non-empty string like `dummy_key`.
 
-## Backend API Specification
+## How It Works (Architecture Flow)
 
-The backend provides the following REST API endpoints:
-
-### `GET /check`
-
-*   **Purpose:** A simple health check endpoint.
-*   **Method:** `GET`
-*   **Response:**
-    *   `200 OK`: Returns JSON `{"message": "hello world"}`.
-
-### `POST /api/upload`
-
-*   **Purpose:** Uploads a PDF file to the server's configured `files/` directory.
-*   **Method:** `POST`
-*   **Request:**
-    *   `Content-Type`: `multipart/form-data`
-    *   `file`: The PDF file (`.pdf` extension required).
-*   **Response:**
-    *   `200 OK`: JSON `{"pdf_name": "your_file_name_without_extension"}`.
-    *   `400 Bad Request`: If the file is not a PDF or issue with the request.
-    *   `500 Internal Server Error`: If the server fails to save the file.
-
-### `POST /api/chat`
-
-*   **Purpose:** Processes a chat conversation history, interacts with Claude (potentially using the `search_pdf` tool via the MCP server), and returns the final aggregated text response.
-*   **Method:** `POST`
-*   **Request:**
-    *   `Content-Type`: `application/json`
-    *   **Body:** JSON object with a `messages` key (list of Anthropic message objects, e.g., `[{"role": "user", "content": "Query"}]`).
-*   **Response:**
-    *   `200 OK`: Plain text string containing the final response from the orchestrator. This may include text generated by Claude and potentially text indicating tool calls/results.
-    *   `400 Bad Request`: Invalid JSON or missing/invalid `messages`.
-    *   `500 Internal Server Error`: Error during MCP connection, Claude interaction, or other processing.
-
-### `POST /benchmark`
-
-*   **Purpose:** Similar to `/api/chat`, but allows overriding default parameters for benchmarking purposes.
-*   **Method:** `POST`
-*   **Request:**
-    *   `Content-Type`: `application/json`
-    *   **Body:** JSON object containing:
-        *   `messages` (List[Dict]): Required conversation history.
-        *   `claude_args` (Optional[Dict]): Overrides for Claude API call (e.g., `model`, `max_tokens`).
-        *   `pdf_root` (Optional[str]): Override PDF search directory.
-        *   `pdf_files` (Optional[List[str]]): Specific PDF filenames (no extension) to load.
-        *   `max_rounds` (Optional[int]): Max internal tool-use rounds.
-*   **Response:**
-    *   `200 OK`: Plain text string containing the final response.
-    *   `400/500`: Similar errors as `/api/chat`.
-
-## Running Tests & Benchmarks
-
-**Prerequisites:**
-
-*   Backend server must be running (`uvicorn app.main:app --reload --port 8000` in `backend/`).
-*   Dependencies must be installed (`uv pip install .[dev]` in `backend/`).
-
-**Running Basic Tests:**
-
-1.  Navigate to the `backend/` directory.
-2.  Run the test script(s):
-    ```bash
-    # Example using the provided upload test
-    python tests/test_upload.py
-    ```
-    *(You might need to adapt or add more tests)*
-
-**Running Benchmarks:**
-
-1.  Navigate to the `benchmarking/` directory.
-2.  Execute the benchmark wrapper:
-    ```bash
-    python benchmark_wrapper.py
-    ```
-    *(Review `benchmark_wrapper.py` for any specific arguments or configuration it might accept)*
+1.  **User Interaction:** The user types a message or uploads a PDF in the OpenWebUI frontend (`front-test`).
+2.  **Frontend Request:** The frontend sends requests to the FastAPI backend API endpoints (e.g., `POST /api/upload` for files, `POST /v1/chat/completions` for messages).
+3.  **FastAPI Routing:** `backend/app/main.py` receives the request and routes it to the appropriate handler function in `backend/app/frontend_router.py`.
+4.  **Orchestration:** For chat messages, the request lands in `backend/app/orchestrator.py`.
+    *   The orchestrator loads relevant PDF content using `pdf_loading_utils.py`.
+    *   It constructs the message history, including PDF context.
+    *   It calls the Anthropic Claude API (`messages.create`).
+5.  **Tool Use (MCP):**
+    *   If Claude decides to use the `search_pdf` tool, the orchestrator (acting as an MCP client) connects to the MCP server (`backend/mcp_server/server.py`).
+    *   The orchestrator sends the tool call request (`search_pdf` with parameters) to the MCP server via the MCP protocol.
+6.  **MCP Server Execution:**
+    *   The MCP server receives the request and executes the `search_pdf` function in `backend/mcp_server/pdf_search.py`.
+    *   This function reads the specified PDF (using `PyMuPDF`), performs the search logic, and prepares the results.
+    *   The MCP server sends the results back to the orchestrator (MCP client).
+7.  **Continuing Conversation:**
+    *   The orchestrator receives the tool results and adds them to the conversation history.
+    *   It calls the Claude API again with the updated history.
+    *   This loop continues until Claude provides a final text response without requesting further tool calls.
+8.  **Response to Frontend:** The final aggregated text response from the orchestrator is sent back through FastAPI to the OpenWebUI frontend, which displays it to the user. For streaming responses, chunks are sent via Server-Sent Events (SSE).

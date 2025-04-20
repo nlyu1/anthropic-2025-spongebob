@@ -11,7 +11,7 @@ import hashlib
 
 from .orchestrator import MCPClient
 from .settings import cors_origins, files_dir
-from .openai_echo import router as echo_router
+from .frontend_router import router as echo_router
 
 app = FastAPI()
 
@@ -119,6 +119,34 @@ async def upload_openai_compatible(file: UploadFile = File(...), process: bool =
     logger.info(f"POST /api/v1/files/ returning: {response}")
     return response
 
+@app.delete("/api/files/{filename}")
+async def delete_file(filename: str):
+    logger.info(f"DELETE /api/files/{filename} endpoint called")
+    # Basic security: ensure filename doesn't contain path traversal chars
+    if ".." in filename or "/" in filename or "\\\\" in filename:
+         logger.warning(f"Attempted path traversal in delete request: {filename}")
+         raise HTTPException(status_code=400, detail="Invalid filename.")
+
+    # Ensure it's targeting a PDF file for safety, though the frontend should only call this for PDFs
+    if not filename.lower().endswith('.pdf'):
+         logger.warning(f"Attempted to delete non-PDF file: {filename}")
+         raise HTTPException(status_code=400, detail="Invalid file type for deletion.")
+
+    abs_files_dir = os.path.abspath(files_dir)
+    file_path = os.path.join(abs_files_dir, filename)
+    logger.info(f"Attempting to delete file at: {file_path}")
+
+    if not os.path.exists(file_path):
+        logger.warning(f"File not found for deletion: {file_path}")
+        raise HTTPException(status_code=404, detail="File not found.")
+
+    try:
+        os.remove(file_path)
+        logger.info(f"Successfully deleted file: {file_path}")
+        return {"message": f"File '{filename}' deleted successfully."}
+    except Exception as e:
+        logger.error(f"Failed to delete file {file_path}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete file: {e}")
 
 @app.post("/api/chat")
 async def chat_endpoint(req: Request):

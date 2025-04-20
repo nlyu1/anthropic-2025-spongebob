@@ -393,7 +393,9 @@
 	};
 
 	// Remove the attached PDF Search file
-	const removePdfSearchFile = () => {
+	const removePdfSearchFile = async () => {
+		const filenameToDelete = pdfSearchFilename; // Store filename before clearing state
+
 		pdfSearchFileId = null;
 		pdfSearchFilename = null;
 		pdfAlreadyAttachedToMessage = false;
@@ -408,6 +410,25 @@
 		}
 		
 		toast.info('PDF Search attachment removed.');
+
+		// Call the backend to delete the file if we have a filename
+		if (filenameToDelete) {
+			try {
+				const response = await fetch(`http://127.0.0.1:8000/api/files/${encodeURIComponent(filenameToDelete)}`, {
+					method: 'DELETE',
+				});
+				if (response.ok) {
+					console.log(`Successfully deleted file ${filenameToDelete} from backend.`);
+				} else {
+					const errorData = await response.text();
+					console.error(`Failed to delete file ${filenameToDelete}: ${response.statusText}`, errorData);
+					toast.error(`Could not delete file from server: ${response.statusText}`);
+				}
+			} catch (error) {
+				console.error(`Error deleting file ${filenameToDelete}:`, error);
+				toast.error(`Error communicating with server to delete file.`);
+			}
+		}
 	};
 
 	const submitHandler = async (useSelectedModels = true, model = null) => {
