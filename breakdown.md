@@ -27,20 +27,7 @@ root/
 
 ## 1  Frontend folder (`frontend/`)
 
-* **Clone, don’t fork**:  
-  ```bash
-  git clone https://github.com/lobehub/lobe-chat frontend
-  ```
-* **Env glue** (all in `frontend/.env.local`):  
-
-  ```
-  NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-  NEXT_PUBLIC_KB_UPLOAD_ENDPOINT=http://localhost:8000/api/upload
-  NEXT_PUBLIC_KB_SEARCH_ENDPOINT=http://localhost:8000/api/search
-  DISABLE_PLUGIN=true
-  ```
-
-* You will *never* commit changes here (use `.env.local` and maybe a patch file if you really must tweak)
+TBD
 
 ---
 
