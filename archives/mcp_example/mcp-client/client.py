@@ -96,7 +96,7 @@ class MCPClient:
                 # Execute tool call
                 result = await self.session.call_tool(tool_name, tool_args)
                 tool_results.append({"call": tool_name, "result": result})
-                final_text.append(f"[Calling tool {tool_name} with args {tool_args}]")
+                final_text.append(f"\n    `[Calling tool {tool_name} with args {tool_args}]`\n")
 
                 # Continue conversation with tool results
                 if hasattr(content, 'text') and content.text:

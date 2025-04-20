@@ -7,7 +7,7 @@ You are Claude 3 with access to the MCP tool **search_pdf(file, query)**.
 
 <!-- 
 uv run python tests/debug_chat.py "GOAL  
-• Read the attached PDF of name gettysburg_address.
+• Read the attached PDFs. 
 • Produce a concise, integrated summary of its key ideas.  
 • Support every claim with accurately transcribed quotations from the PDF by using the MCP tool **search_pdf(file, query)**.
 • Do not call the tool search_pdf just to verify that the file exists. You can assume that it exists. 

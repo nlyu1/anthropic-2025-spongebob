@@ -136,7 +136,7 @@ class MCPClient:
                         # """
                         # Use a different name: don't overwrite the tool-call content!
                         tool_return_content = result.content[0]
-                        final_text.append(f"[Calling tool {tool_name} with args {tool_args}]")
+                        final_text.append(f"\n    `[Calling tool {tool_name} with args {tool_args}]`\n")
                         # Add tool-call response to the content list 
                         if hasattr(tool_return_content, 'text') and tool_return_content.text:
                             content_list.append({
