@@ -32,6 +32,43 @@
     ```
     The server should now be running at `http://localhost:8000`.
 
+## Backend API Specification
+
+The backend provides the following REST API endpoints:
+
+### `GET /check`
+
+*   **Purpose:** A simple health check endpoint.
+*   **Method:** `GET`
+*   **Request:** None
+*   **Response:**
+    *   `200 OK`: Returns a JSON object `{"message": "hello world"}`.
+
+### `POST /api/upload`
+
+*   **Purpose:** Uploads a PDF file to the server's `files/` directory.
+*   **Method:** `POST`
+*   **Request:**
+    *   `Content-Type`: `multipart/form-data`
+    *   `file`: The PDF file to upload. The server currently only accepts files with a `.pdf` extension.
+*   **Response:**
+    *   `200 OK`: Returns a JSON object `{"pdf_name": "your_file_name_without_extension"}` upon successful upload.
+    *   `400 Bad Request`: If the uploaded file is not a PDF or if there's an issue with the request format.
+    *   `500 Internal Server Error`: If the server fails to save the file.
+*   **Example Usage:** See `backend/tests/test_upload.py`.
+
+### `POST /api/chat`
+
+*   **Purpose:** Sends a chat message history to the Claude model via an MCP client, potentially using tools defined on an MCP server (`./mcp_server/server.py`), and returns the model's final response.
+*   **Method:** `POST`
+*   **Request:**
+    *   `Content-Type`: `application/json`
+    *   **Body:** A JSON object containing a `messages` key. The value should be a list of message objects, following the Anthropic Messages API format (e.g., `[{"role": "user", "content": "Your query here"}]`).
+*   **Response:**
+    *   `200 OK`: Returns the final text response from the Claude model as a plain text string. This might include text generated directly by the model and placeholders indicating tool calls were made (e.g., `[Calling tool search_pdf with args {'pdf_name': 'WGAN', 'query': 'probability density'}]`). **Note:** The current implementation in `orchestrator.py` handles tool calls sequentially and may not fully support complex multi-tool interactions in a single turn.
+    *   `400 Bad Request`: If the request body is missing, malformed, or the `messages` list is invalid.
+    *   `500 Internal Server Error`: If an error occurs during MCP client setup, connection to the server, or processing the query with Claude.
+
 ## Running Tests
 
 A simple test script is provided to check basic functionality.
