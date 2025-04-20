@@ -140,7 +140,7 @@ class MCPClient:
                         tool_return_content = result.content[0]
                         # final_text.append(f"\n    `[Calling tool {tool_name} with args {tool_args}]`\n")
                         tool_snippet = ','.join([f"{k}: {v}" for k, v in tool_args.items()])
-                        tool_display = f"""🛠️ {tool_name} – {tool_snippet}\n"""
+                        tool_display = f"""  🔵 🛠️ {tool_name} – {tool_snippet}\n"""
                         final_text.append(tool_display)
                         # Add tool-call response to the content list 
                         if hasattr(tool_return_content, 'text') and tool_return_content.text:
