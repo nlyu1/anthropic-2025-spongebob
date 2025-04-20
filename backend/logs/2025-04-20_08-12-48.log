@@ -1,0 +1,8 @@
+2025-04-20 08:12:48,577 - INFO - Server starting. Logging to ./logs/2025-04-20_08-12-48.log
+2025-04-20 08:12:48,578 - INFO - Expecting PDF files in: /Users/nicholaslyu/Code/Physics 191/anthropic-2025-spongebob/backend/files
+2025-04-20 08:12:48,580 - INFO - Starting MCP server...
+2025-04-20 08:12:48,584 - INFO - Processing request of type ListToolsRequest
+2025-04-20 08:12:48,585 - INFO - Processing request of type ListToolsRequest
+2025-04-20 08:12:52,055 - INFO - Processing request of type CallToolRequest
+2025-04-20 08:12:52,055 - INFO - [DEBUG / MCP Server] Received request: search_pdf(pdf_name='short_pdf1', query='pdf_1', context_length=2000, topk=10)
+2025-04-20 08:12:52,062 - INFO - [DEBUG / MCP Server] Search completed. File exists: True, Query exists: False, Matches found: 0

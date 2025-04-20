@@ -20,7 +20,7 @@ LOG_FILE_PATH = os.path.join(LOG_DIR, LOG_FILENAME)
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format='[MCP Server] %(message)s',
     handlers=[
         logging.FileHandler(LOG_FILE_PATH),
         logging.StreamHandler()  # Also log to console
@@ -52,7 +52,7 @@ def search_pdf(pdf_name: str, query: str, context_length: int = 2000, topk: int 
     Returns:
         A dictionary with keys: file_exists (bool), query_exists (bool), matches (list[str]), and optionally error (str).
     """
-    logger.info(f"[DEBUG / MCP Server] Received request: search_pdf(pdf_name='{pdf_name}', query='{query}', context_length={context_length}, topk={topk})")
+    logger.info(f"Received request: search_pdf(pdf_name='{pdf_name}', query='{query}', context_length={context_length}, topk={topk})")
 
     try:
         # Note: search_pdf_content uses DEFAULT_FILES_DIR = "../files" internally,
@@ -65,12 +65,12 @@ def search_pdf(pdf_name: str, query: str, context_length: int = 2000, topk: int 
             topk=topk
             # files_dir argument is omitted to use the default defined in pdf_search.py
         )
-        logger.info(f"[DEBUG / MCP Server] Search completed. File exists: {result.get('file_exists')}, Query exists: {result.get('query_exists')}, Matches found: {len(result.get('matches', []))}")
+        logger.info(f"Search completed. File exists: {result.get('file_exists')}, Query exists: {result.get('query_exists')}, Matches found: {len(result.get('matches', []))}")
         if 'error' in result:
-            logger.error(f"[ERROR / MCP Server] Error during search: {result['error']}")
+            logger.error(f"Error during search: {result['error']}")
         return result
     except Exception as e:
-        logger.exception(f"[ERROR / MCP Server] Unhandled exception during search_pdf execution for '{pdf_name}'")
+        logger.exception(f"Unhandled exception during search_pdf execution for '{pdf_name}'")
         # Return a generic error structure consistent with expected output
         return {
             "file_exists": False, # Cannot confirm if file exists if an unexpected error occured

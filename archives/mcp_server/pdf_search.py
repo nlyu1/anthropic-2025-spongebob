@@ -82,7 +82,6 @@ def search_pdf_content(
             context = re.sub(r'\s+', ' ', context).strip()
 
             matches_found.append(context)
-
     except Exception as e:
         # Handle potential regex errors, although unlikely with simple strings
         result["error"] = f"Error during search: {e}"

@@ -27,7 +27,20 @@ root/
 
 ## 1  Frontend folder (`frontend/`)
 
-TBD
+* **Clone, don’t fork**:  
+  ```bash
+  git clone https://github.com/lobehub/lobe-chat frontend
+  ```
+* **Env glue** (all in `frontend/.env.local`):  
+
+  ```
+  NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+  NEXT_PUBLIC_KB_UPLOAD_ENDPOINT=http://localhost:8000/api/upload
+  NEXT_PUBLIC_KB_SEARCH_ENDPOINT=http://localhost:8000/api/search
+  DISABLE_PLUGIN=true
+  ```
+
+* You will *never* commit changes here (use `.env.local` and maybe a patch file if you really must tweak)
 
 ---
 
@@ -66,8 +79,9 @@ from .tools.pdf_search import mcp, search_pdf
 client = AsyncAnthropic()
 tool_descriptor = mcp.describe()["tools"][0]      # JSON schema
 
-SYSTEM = """You are an expert research assistant.
-When sourcing facts from PDFs, call the search_pdf tool first ..."""
+SYSTEM = None
+# """You are an expert research assistant.
+# When sourcing facts from PDFs, call the search_pdf tool first ..."""
 
 async def chat_with_tools(messages: list[dict]):
     stream = await client.messages.create(

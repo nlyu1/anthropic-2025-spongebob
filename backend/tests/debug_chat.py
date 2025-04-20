@@ -5,9 +5,9 @@ import argparse
 # Default API endpoint URL
 DEFAULT_URL = "http://localhost:8000/api/chat"
 
-def debug_chat_stream(url: str, message: str):
+def debug_chat_request(url: str, message: str):
     """
-    Sends a single message to the chat API and prints the streamed SSE response.
+    Sends a single message to the chat API and prints the final response.
     """
     request_body = {
         "messages": [
@@ -15,49 +15,20 @@ def debug_chat_stream(url: str, message: str):
         ]
     }
 
+    # Standard headers, no SSE
     headers = {
-        "Accept": "text/event-stream"
+        "Content-Type": "application/json"
     }
 
     try:
         print(f"Sending request to {url} with message: '{message[:50]}...'")
-        with requests.post(url, json=request_body, headers=headers, stream=True, timeout=180) as response:
+        with requests.post(url, json=request_body, headers=headers, timeout=180) as response:
             response.raise_for_status() # Raise an exception for bad status codes (4xx or 5xx)
 
-            print("--- Streaming Response ---")
-            for line in response.iter_lines():
-                if line:
-                    decoded_line = line.decode('utf-8')
-                    # Process SSE lines
-                    if decoded_line.startswith('data:'):
-                        try:
-                            # Extract JSON payload after "data: "
-                            json_data = decoded_line[len('data: '):].strip()
-                            if json_data == "[DONE]":
-                                print("\n--- Stream Ended (DONE) ---")
-                                break
-                            # Avoid parsing empty data lines if any slip through
-                            if json_data:
-                                payload = json.loads(json_data)
-                                # Pretty print the JSON payload
-                                print(json.dumps(payload, indent=2))
-                        except json.JSONDecodeError:
-                            print(f"[Warning] Received non-JSON data line: {decoded_line}")
-                        except Exception as e:
-                            print(f"[Error] Could not process line: {decoded_line}, Error: {e}")
-                    elif decoded_line.startswith('event: done'):
-                        # Optional: Can log or handle this specific event marker
-                        pass
-                    elif decoded_line.startswith('event: error'):
-                        # The error payload follows in the next 'data:' line
-                        print(f"[Received Error Event] (Details in next data line)")
-                    elif decoded_line.startswith(':'):
-                         # SSE comment line, ignore
-                         pass
-                    # else:
-                        # print(f"[Raw Line] {decoded_line}") # Uncomment for very raw debugging
-
-            print("-------------------------")
+            print("--- Full Response ---")
+            # Print the entire response text
+            print(response.text)
+            print("--------------------")
 
     except requests.exceptions.RequestException as e:
         print(f"\n[Error] Failed to connect or communicate with the API at {url}: {e}")
@@ -72,4 +43,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    debug_chat_stream(args.url, args.message) 
+    # Call the renamed function
+    debug_chat_request(args.url, args.message) 
