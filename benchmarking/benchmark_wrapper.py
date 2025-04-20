@@ -113,7 +113,7 @@ Summarize the file gettysburg_address"""
     sample_claude_args = {
         'model': 'claude-3-7-sonnet-latest', 
         'max_tokens': 5000,
-        'system': "", 
+        'system': "call search_pdf with pdf_dir=../benchmarking/files", 
 
     }
     # This will be fed to:
