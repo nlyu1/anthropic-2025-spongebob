@@ -39,7 +39,7 @@ anthropic_client = Anthropic(api_key=anthropic_api_key)
 SYSTEM_PROMPT = """You are connected to a MCP tool `pdf_search`. The conversation pipeline works as follows:
 1. Whenever you return a message of type 'text', it is displayed to the user. 
 2. Whenever you return a message of type 'tool_use', it is passed to the `pdf_search` tool. The output of the tool is given back to you. However, make sure to vocally acknowledge the result / success of the tool call results, since the tool-use response will not be streamed to the client.
-3. Make at most 20 tool calls. 
+3. **Make at most 20 tool calls**. Make sure to check the number of tool calls you have made, and output  . 
 4. The frontend has rich markdown formatting capabilities.
 
 When asked for summaries, your instructions are as follows: 
@@ -72,7 +72,7 @@ async def list_models():
     return {
         "object": "list",
         "data": [{
-            "id": "Claude*",                 # shown in WebUI dropdown
+            "id": "Claude-trusted",                 # shown in WebUI dropdown
             "object": "model",
             "created": int(datetime.datetime.utcnow().timestamp()),
             "owned_by": "local"
@@ -225,7 +225,7 @@ async def completions(req: Request):
     
     message_id = str(uuid.uuid4())
     created_time = int(datetime.datetime.utcnow().timestamp())
-    model = body.get("model", "Claude*")
+    model = body.get("model", "Claude-trusted")
     
     # For non-streaming mode, return the complete response
     if not stream_mode:

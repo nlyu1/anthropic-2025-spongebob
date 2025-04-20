@@ -247,7 +247,7 @@ async def list_models():
     return {
         "object": "list",
         "data": [{
-            "id": "Claude*",                 # shown in WebUI dropdown
+            "id": "Claude-trusted",                 # shown in WebUI dropdown
             "object": "model",
             "created": int(datetime.datetime.utcnow().timestamp()),
             "owned_by": "local"
