@@ -29,8 +29,8 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-logger.info(f"Server starting. Logging to {LOG_FILE_PATH}")
-logger.info(f"Expecting PDF files in: {os.path.abspath(DEFAULT_FILES_DIR)}")
+# logger.info(f"Server starting. Logging to {LOG_FILE_PATH}")
+# logger.info(f"Expecting PDF files in: {os.path.abspath(DEFAULT_FILES_DIR)}")
 
 # --- MCP Server Setup ---
 # Initialize FastMCP server - Changed name to reflect function
@@ -53,7 +53,7 @@ def search_pdf(pdf_name: str, query: str, pdf_dir: str = "./files", context_leng
     Returns:
         A dictionary with keys: file_exists (bool), query_exists (bool), matches (list[str]), and optionally error (str).
     """
-    logger.info(f"Received request: search_pdf(pdf_name='{pdf_name}', query='{query}', context_length={context_length}, topk={topk})")
+    # logger.info(f"Received request: search_pdf(pdf_name='{pdf_name}', query='{query}', context_length={context_length}, topk={topk})")
 
     try:
         # Note: search_pdf_content uses DEFAULT_FILES_DIR = "../files" internally,
@@ -66,9 +66,10 @@ def search_pdf(pdf_name: str, query: str, pdf_dir: str = "./files", context_leng
             topk=topk,
             pdf_dir=pdf_dir
         )
-        logger.info(f"Search completed. File exists: {result.get('file_exists')}, Query exists: {result.get('query_exists')}, Matches found: {len(result.get('matches', []))}")
+        # logger.info(f"Search completed. File exists: {result.get('file_exists')}, Query exists: {result.get('query_exists')}, Matches found: {len(result.get('matches', []))}")
         if 'error' in result:
-            logger.error(f"Error during search: {result['error']}")
+            pass
+            # logger.error(f"Error during search: {result['error']}")
         return result
     except Exception as e:
         logger.exception(f"Unhandled exception during search_pdf execution for '{pdf_name}'")
@@ -81,10 +82,12 @@ def search_pdf(pdf_name: str, query: str, pdf_dir: str = "./files", context_leng
         }
 
 if __name__ == "__main__":
-    logger.info("Starting MCP server...")
+    # logger.info("Starting MCP server...")
     try:
         mcp.run()
     except Exception as e:
-        logger.exception("MCP Server failed to run.")
+        pass    
+        # logger.exception("MCP Server failed to run.")
     finally:
-        logger.info("MCP Server stopped.")
+        pass
+        # logger.info("MCP Server stopped.")

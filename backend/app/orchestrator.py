@@ -9,6 +9,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 from anthropic import Anthropic
+import json
 from dotenv import load_dotenv
 
 # Import the function from the new module
@@ -30,7 +31,7 @@ class MCPClient:
         self.anthropic = Anthropic(api_key=key)
         self.claude_args = claude_args
 
-    async def process_query(self, messages: list, pdf_root="./files", pdf_files=None, max_rounds=10) -> str:
+    async def process_query(self, messages: list, pdf_root="./files", pdf_files=None, max_rounds=25) -> str:
         """
         pdf_root: where to look for pdf's
         pdf_files: which pdf files to parse & add to conversation. By default, everything in the folder is added 
@@ -104,6 +105,7 @@ class MCPClient:
         compute_types = lambda response: [content.type for content in response.content]
         # print('DEBUG: Claude response: \n\n\n', response, '\n\n\n')
         for i in range(max_rounds):
+            logger.info(f"\n\n[INFO/Orchestrator] Processing round #{i}\n\n     Types: {compute_types(response)}\n\n")
             # Append the model's response to the conversation
             running_messages.append({
                 "role": "assistant",
@@ -136,13 +138,20 @@ class MCPClient:
                         # """
                         # Use a different name: don't overwrite the tool-call content!
                         tool_return_content = result.content[0]
-                        final_text.append(f"\n    `[Calling tool {tool_name} with args {tool_args}]`\n")
+                        # final_text.append(f"\n    `[Calling tool {tool_name} with args {tool_args}]`\n")
+                        tool_snippet = ','.join([f"{k}: {v}" for k, v in tool_args.items()])
+                        tool_display = f"""🛠️ {tool_name} – {tool_snippet}\n"""
+                        final_text.append(tool_display)
                         # Add tool-call response to the content list 
                         if hasattr(tool_return_content, 'text') and tool_return_content.text:
                             content_list.append({
                                 'type': 'tool_result', 
                                 'tool_use_id': tool_use_id, 
                                 'content': tool_return_content.text 
+                            })
+                            content_list.append({
+                                'type': 'text',
+                                'text': f"Call {i+1} of {max_rounds} tools executed."
                             })
                     except Exception as e:
                         # raise RuntimeError(f"[ERROR / Orchestrator / process_query] Error calling tool {tool_name} with args {tool_args}: {e}")

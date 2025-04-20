@@ -36,17 +36,43 @@ logger = logging.getLogger(__name__)
 anthropic_client = Anthropic(api_key=anthropic_api_key)
 
 # System prompt for PDF processing
-SYSTEM_PROMPT = """You are a helpful AI assistant specialized in answering questions based on PDF documents.
-When answering questions, always refer to the contents of the provided PDF and avoid making up information.
-If the information cannot be found in the PDF, clearly state that fact.
-Use direct quotes from the PDF when appropriate and cite page numbers or sections if available."""
+SYSTEM_PROMPT = """You are connected to a MCP tool `pdf_search`. The conversation pipeline works as follows:
+1. Whenever you return a message of type 'text', it is displayed to the user. 
+2. Whenever you return a message of type 'tool_use', it is passed to the `pdf_search` tool. The output of the tool is given back to you. However, make sure to vocally acknowledge the result / success of the tool call results, since the tool-use response will not be streamed to the client.
+3. Make at most 20 tool calls. 
+4. The frontend has rich markdown formatting capabilities.
+
+When asked for summaries, your instructions are as follows: 
+GOAL  
+• Read the attached PDF. 
+• Produce a concise, integrated summary of its key ideas.  
+• Support key claims in the summary with accurately transcribed quotations from the PDF by using the MCP tool **search_pdf(file, query)**. Output the quotes after they have been verified, since the tool-use results will not be streamed to the client.
+• Do not call the tool search_pdf just to verify that the file exists. You can assume that it exists. 
+
+MANDATORY WORKFLOW  
+1. **Plan step‑by‑step.** Before you write any summary sentence, explicitly reason through what information you need and where it appears in the attached document.  
+2. First output a candidate summary, together with a list of quotations you intend to use (check). 
+2. For each quotation you intend to use:  
+   a. Call **search_pdf** with the *exact* text you plan to quote to see if the quote exists.  
+   b. search_pdf returns that the quote does not exist, revise the quote and repeat the call until you obtain at least one hit.  
+3. If any re‑check fails, acknowledge the failure and immediately correct or remove the quotation.  
+4. **Output format**:  
+   • Present the summary in coherent paragraphs.  
+   • Quotes begin with <quote> and end with <\quote>.  
+   • After the summary, you must include an **Audit Trail** table listing *all* search_pdf calls in order, showing the query string, number of matches, and relevant matched content, if it exists. 
+
+CONSTRAINTS  
+• Do not fabricate or alter quotations.  
+• Only finalize the summary based on information that can be directly verified with search_pdf calls logged in the Audit Trail.  
+• Stay within 400 words for the final main summary (citations excluded). 
+"""
 
 @router.get("/v1/models")
 async def list_models():
     return {
         "object": "list",
         "data": [{
-            "id": "pdf-master",                 # shown in WebUI dropdown
+            "id": "Claude*",                 # shown in WebUI dropdown
             "object": "model",
             "created": int(datetime.datetime.utcnow().timestamp()),
             "owned_by": "local"
@@ -134,7 +160,7 @@ async def process_pdf_query(user_query: str, pdf_file_id: str) -> str:
     # Get Claude's response
     try:
         response = anthropic_client.messages.create(
-            model="claude-3-haiku-20240307",
+            model="claude-3.7-latest",
             system=SYSTEM_PROMPT,
             messages=messages,
             max_tokens=2000
@@ -153,7 +179,7 @@ async def completions(req: Request):
     claude_args = {
         'model': 'claude-3-7-sonnet-latest', 
         'max_tokens': 5000, 
-        'system': ""
+        'system': SYSTEM_PROMPT
     }
     
     # Check if files are included in the request
@@ -181,8 +207,7 @@ async def completions(req: Request):
         raise HTTPException(status_code=400, detail=f"Error processing request: {e}")
 
     # Define default claude_args locally
-    default_claude_args = {'model': 'claude-3-7-sonnet-latest', 'max_tokens': 5000}
-    client = MCPClient(claude_args=default_claude_args) # Pass default args
+    client = MCPClient(claude_args=claude_args) # Pass default args
 
     reply_text = "Error"
     try:
@@ -200,7 +225,7 @@ async def completions(req: Request):
     
     message_id = str(uuid.uuid4())
     created_time = int(datetime.datetime.utcnow().timestamp())
-    model = body.get("model", "pdf-master")
+    model = body.get("model", "Claude*")
     
     # For non-streaming mode, return the complete response
     if not stream_mode:
@@ -235,7 +260,7 @@ async def completions(req: Request):
                 }]
             }
             yield json.dumps(chunk)
-            await asyncio.sleep(0.005)  # Optional: adjust delay if needed
+            await asyncio.sleep(0.00)  # Optional: adjust delay if needed
 
         # Send final chunk with finish_reason: "stop"
         final_chunk = {

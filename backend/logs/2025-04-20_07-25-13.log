@@ -1,5 +1,0 @@
-2025-04-20 07:25:13,116 - INFO - Server starting. Logging to ./logs/2025-04-20_07-25-13.log
-2025-04-20 07:25:13,116 - INFO - Expecting PDF files in: /Users/nicholaslyu/Code/Physics 191/anthropic-2025-spongebob/backend/files
-2025-04-20 07:25:13,118 - INFO - Starting MCP server...
-2025-04-20 07:25:13,123 - INFO - Processing request of type ListToolsRequest
-2025-04-20 07:25:13,124 - INFO - Processing request of type ListToolsRequest

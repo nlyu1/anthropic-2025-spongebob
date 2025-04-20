@@ -40,31 +40,6 @@ async def check_endpoint():
     logger.info(f"GET /check returning: {response}")
     return response
 
-SYSTEM_PROMPT = """When the user prompts for summaries, your instructions are as follows: 
-GOAL  
-• Read the attached PDFs. 
-• Produce a concise, integrated summary of its key ideas.  
-• Support every claim with accurately transcribed quotations from the PDF by using the MCP tool **search_pdf(file, query)**. Output the quotes after they have been verified, since the tool-use results will not be streamed to the client.
-• Do not call the tool search_pdf just to verify that the file exists. You can assume that it exists. 
-
-MANDATORY WORKFLOW  
-1. **Plan step‑by‑step.** Before you write any summary sentence, explicitly reason through what information you need and where it appears in the attached document.  
-2. For each quotation you intend to use:  
-   a. Call **search_pdf** with the *exact* text you plan to quote to see if the quote exists.  
-   b. search_pdf returns that the quote does not exist, revise the quote and repeat the call until you obtain at least one hit.  
-3. If any re‑check fails, immediately correct or remove the quotation.  
-4. **Output format**:  
-   • Present the summary in coherent paragraphs.  
-   • Quotes begin with <quote> and end with <\quote>.  
-   • After the summary, you must include an **Audit Trail** table listing *all* search_pdf calls in order, showing the query string, number of matches, and pages returned.
-
-CONSTRAINTS  
-• Do not fabricate or alter quotations.  
-• Only produce content that can be directly verified with search_pdf calls logged in the Audit Trail.  
-• Stay within 400 words for the main summary (citations excluded). 
-
-The frontend has rich markdown formatting capabilities."""
-
 @app.post("/api/upload")
 async def upload(file: UploadFile = File(...)):
     logger.info(f"POST /api/upload endpoint called with filename: {file.filename}")
