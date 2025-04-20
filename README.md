@@ -27,6 +27,7 @@ Follow these steps to set up and run the backend server.
 3.  **Create and activate a virtual environment:**
     ```bash
     uv venv
+    uv sync 
     source .venv/bin/activate  # On Linux/macOS
     # .\.venv\Scripts\activate  # On Windows PowerShell
     ```
@@ -34,7 +35,7 @@ Follow these steps to set up and run the backend server.
 4.  **Install dependencies:**
     This command installs the main application dependencies and development dependencies (like `requests` needed for tests/benchmarking).
     ```bash
-    uv pip install .[dev]
+    uv pip install .
     ```
 
 5.  **Configure Environment Variables:**
