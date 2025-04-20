@@ -4,31 +4,53 @@ echo "=============================================="
 echo "Starting FastAPI backend with OpenAI compatibility"
 echo "=============================================="
 
-# Change to backend directory
-cd backend || { 
-    echo "Error: Could not find backend directory!"
-    exit 1
-}
+# Navigate to the backend directory
+cd "$(dirname "$0")/backend" || { echo "Failed to navigate to backend directory"; exit 1; }
 
-# Activate virtual environment
+# Activate virtual environment if it exists
 if [ -d ".venv" ]; then
     echo "Activating virtual environment..."
-    source .venv/bin/activate || {
-        echo "Error: Failed to activate virtual environment!"
-        exit 1
-    }
+    source .venv/bin/activate
 else
-    echo "Warning: No .venv directory found. Make sure you've set up the backend first."
-    echo "See the README.md for setup instructions."
+    echo "No virtual environment found. Make sure to run:"
+    echo "cd backend && uv venv && uv pip install -e ."
     exit 1
 fi
 
-# Kill any existing uvicorn processes
-pkill -f "uvicorn app.main:app" 2>/dev/null || true
-echo "Starting server on http://127.0.0.1:8000..."
+# Check for required dependencies
+if ! python -c "import anthropic" &> /dev/null; then
+    echo "Anthropic library not found. Installing required dependencies..."
+    uv pip install anthropic
+fi
+
+if ! python -c "import pdfminer" &> /dev/null; then
+    echo "PDFMiner not found. Installing required dependencies..."
+    uv pip install pdfminer.six
+fi
+
+# Check for Anthropic API key
+if [ -z "$ANTHROPIC_API_KEY" ] && [ ! -f ".env" ] && [ ! -f "../.env" ]; then
+    echo "ANTHROPIC_API_KEY not found in environment or .env file"
+    echo "Please create a .env file with your Anthropic API key:"
+    echo "ANTHROPIC_API_KEY=your_key_here"
+    exit 1
+fi
+
+# Create files directory if it doesn't exist
+mkdir -p ../files
+
+# Make sure MCP server is available
+if [ ! -d "./mcp_server" ]; then
+    echo "MCP server directory not found. Make sure backend/mcp_server exists."
+    exit 1
+fi
+
+echo "Starting backend server with PDF search functionality..."
+echo "PDF files should be placed in the 'files/' directory"
+echo "Use Ctrl+C to stop the server"
 
 # Start the server
-python -m uvicorn app.main:app --port 8000 --reload
+uvicorn app.main:app --reload --port 8000
 
 echo ""
 echo "Server has been stopped."

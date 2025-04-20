@@ -99,7 +99,7 @@ A simple test script is provided to check basic functionality.
 
 ## OpenAI-Compatible API Endpoints
 
-The backend now provides OpenAI-compatible endpoints for using with Open WebUI:
+The backend provides OpenAI-compatible endpoints for using with Open WebUI:
 
 ### Setup
 
@@ -125,6 +125,25 @@ The backend now provides OpenAI-compatible endpoints for using with Open WebUI:
 - `POST /v1/chat/completions` - Processes chat messages with OpenAI-compatible format
 - `POST /api/v1/files/` - Uploads PDF files and returns compatible metadata
 
+### PDF Search and Question Answering
+
+The backend now includes a fully integrated PDF search and question answering system:
+
+1. **PDF Upload and Search:**
+   - Upload your PDF files using the OpenAI-compatible files endpoint
+   - The system will search the PDF file for relevant content matching your query
+   - Search is performed on both exact matches and important keywords from your question
+
+2. **AI-Powered Responses:**
+   - The system uses Claude (via the Anthropic API) to generate accurate answers based only on the content found in your PDF
+   - The assistant will cite information directly from the document when possible
+   - If information isn't found in the document, the assistant will clearly indicate this
+
+3. **Search Strategy:**
+   - The system first tries to match your whole query
+   - If no exact matches are found, it searches for individual keywords in your question
+   - Results are ranked by relevance and provided to Claude for synthesis
+
 ### Working with Files
 
 The backend supports uploading and referencing PDF files:
@@ -147,35 +166,17 @@ The backend supports uploading and referencing PDF files:
 
 ### Testing
 
-You can test all endpoints with curl:
+You can test the PDF functionality using the provided test script:
 
 ```bash
-# Test models endpoint
-curl http://127.0.0.1:8000/v1/models
-
-# Test chat endpoint (streaming mode)
-curl -X POST http://127.0.0.1:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"pdf-master", "messages":[{"role":"user","content":"hi"}]}'
-
-# Test chat endpoint (non-streaming mode)
-curl -X POST http://127.0.0.1:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"pdf-master", "messages":[{"role":"user","content":"hi"}], "stream":false}'
+# From the backend directory
+python tests/test_pdf_chat.py
 ```
 
-### Integration with Real Chat Processing
-
-The current implementation is a simple echo service. To integrate with actual PDF search functionality, 
-you'll need to modify `backend/app/openai_echo.py` to connect with your existing PDF processing pipeline. 
-
-The `completions` function already detects file references in the format Open WebUI sends them:
-```python
-files = body.get("files", [])
-if files:
-    # Process each file ID and fetch content as needed
-    for file in files:
-        file_id = file.get("id")
-        file_type = file.get("type", "file")
-        # Connect to your PDF search pipeline here
-```
+This script verifies that:
+1. The server is running correctly
+2. The models endpoint returns the expected model
+3. Basic chat functionality works
+4. PDF files can be uploaded successfully
+5. Chat with file references properly processes the PDF and returns relevant information
+6. Streaming mode works correctly with PDF responses
