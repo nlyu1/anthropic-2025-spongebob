@@ -1,0 +1,2619 @@
+Fermionic Gaussian Testing and Non-Gaussian Measures via Convolution
+Xingjian Lyu1, ∗and Kaifeng Bu2, 1, †
+1Harvard University, Cambridge, Massachusetts 02138, USA
+2Ohio State University, Columbus, Ohio 43210, USA
+We define fermionic convolution and demonstrate its utility in characterizing fermionic non-
+Gaussian components, which are essential to the computational advantage of fermionic systems.
+Using fermionic convolution, we propose an efficient protocol that tests the fermionic Gaussianity
+of pure states using three copies of the input state. We also introduce “Non-Gaussian Entropy,” an
+experimentally accessible resource measure that quantifies fermionic non-Gaussianity. These results
+provide new insights into the study of fermionic quantum computation.
+I.
+INTRODUCTION
+A central challenge in quantum science is understand-
+ing the boundary between quantum and classical compu-
+tation. One strategy is to explore the classical simulabil-
+ity of quantum computation models and identifying the
+resources that enable computational advantages. Char-
+acterizing these resources is essential for evaluating the
+potential of quantum information-processing systems.
+For instance, the Gottesman-Knill theorem [1] reveals
+that stabilizer circuits—composed of stabilizer states,
+Clifford gates, and Pauli measurements—can be effi-
+ciently simulated classically. This underscores the critical
+role of nonstabilizer components, or “magic,” in achiev-
+ing universal quantum computation [2]. The amount of
+magic can be shown to bound the classical simulation
+time of quantum circuits [3–10].
+In
+continuous-variable
+bosonic
+systems,
+Gaussian
+states and unitaries play a similar foundational role in
+quantum information protocols due to their mathemat-
+ical tractability [11]. It is well established that bosonic
+Gaussian circuits consisting of Gaussian states, unitaries,
+and measurements can be efficiently classically simu-
+lated [12], implying that non-Gaussianity is a key quan-
+tum resource for computational advantage. This is also
+evidenced by the utility of non-Gaussian components in
+numerous quantum information tasks [13–18], such as
+error correction in the GKP code [19].
+Consequently,
+the resource theory of continuous-variable bosonic non-
+Gaussianity has been developed to characterize its role
+in bosonic quantum computation [20–31].
+Another important framework for the classical simu-
+lation of quantum circuits is matchgate simulation, first
+introduced by Valiant [32]. It has been shown that quan-
+tum circuits composed of matchgates acting on nearest-
+neighbor qubits can be simulated efficiently on a classical
+computer [32–35].
+The connection between matchgate
+circuits and the theory of fermionic linear optics (equiv-
+alently, fermionic Gaussian circuits) has been later ex-
+plored in [33, 34, 36, 37]. The theory of fermionic linear
+optics has a number of applications, including Majorana
+∗nicholaslyu@college.harvard.edu
+† bu.115@osu.edu
+fermions in quantum wires [38] and Kitaev’s honeycomb
+lattice model [39]. Supported by advancements in experi-
+mental platforms, this theory continues to drive advances
+in quantum information processing [40–43].
+Recent work has extended the notion of magic to
+fermionic computation; it has been shown that all pure
+fermionic non-Gaussian states exhibit magic and, with
+adaptive measurement, enable universal quantum com-
+putation [44];
+this result parallels that for discrete
+bosonic Gaussian, or Clifford, circuits. General resource
+measures have been applied to magic-enhanced fermionic
+Gaussian circuits [45–47], contributing to an understand-
+ing of their classical simulation.
+To gain more insights into fermionic non-Gaussianity,
+which is central to the computational advantage of
+fermionic quantum computation, we propose a system-
+atic approach using fermionic convolution. This is moti-
+vated by the idea that Gaussian properties are uniquely
+invariant under convolution.
+We define and study the
+notion of fermionic convolution, which is defined using
+a fermionic Gaussian unitary. The iterative application
+of fermionic convolution to a fermionic input state con-
+verges to the Gaussian state with the same covariance;
+we call the process of this iterative-limit fermionic Gaus-
+sification. We prove that fermionic Gaussification maps
+a fermionic state to the closest Gaussian state in terms
+of relative entropy, and that this relative entropy de-
+creases monotonically with each iterative application of
+convolution. We also establish fermionic Gaussification
+as a resource-destroying map in the resource theory of
+fermionic quantum computation.
+We prove that fermionic self-convolution preserves en-
+tropy only for Gaussian states. Based on this property,
+we propose a new measure, “Non-Gaussian Entropy.”to
+quantify non-Gaussianity.
+The problem of Gaussian
+property testing is also considered. Property testing is a
+crucial area in quantum computation that entails assess-
+ing whether a given state or circuit has a certain property.
+For instance, separability testing is used to determine
+whether a state is separable [48–52]. Here, we propose
+a novel protocol based on fermionic convolution to dis-
+tinguish fermionic Gaussian states which only uses three
+copies of the input state. This protocol readily extends
+to Gaussian unitary testing and provide valuable tools
+for identifying quantum computational resources.
+arXiv:2409.08180v2  [quant-ph]  8 Oct 2024
+
+2
+A.
+Preliminaries
+Let us consider a system of n fermionic modes with
+creation a†
+j and annihilation aj operators for j = 1, ..., n.
+They satisfy the canonical anti-commutation relations
+{aj, a†
+k} = δjk,
+{aj, ak} = 0.
+(I.1)
+It is convenient to define 2n Hermitian Majorana opera-
+tors { γj }2n
+j=1 defined as
+γ2j−1 = aj + a†
+j,
+γ2j = i(aj −a†
+j).
+(I.2)
+The operators { γj }2n
+i=j are Hermitian, traceless and gen-
+erate a Clifford algebra C2n which satisfies the relation
+{γj, γk} = 2δjkI.
+(I.3)
+The Majorana operators { γj }2n
+j=1 can be represented by
+the product of Pauli operators by the Jordan-Wigner
+transformation as follows
+γ2j−1 = Z⊗(j−1) ⊗X ⊗I⊗(n−j),
+γ2j = Z⊗(j−1) ⊗Y ⊗I⊗(n−j),
+∀j.
+Given an ordered subset (multi-index) J ⊂[2n], we de-
+fine γJ as the ordered product of the Majorana operators
+indexed by J. Specifically,
+γJ =
+Y
+j∈J
+γj.
+We use |J| to denote the size of the subset J. Any linear
+operator A ∈C2n can be expanded in the Majorana basis:
+A = 1
+2n
+X
+J
+AJγJ,
+AJ = Tr(γ†
+JA) ∈C.
+(I.4)
+An element A is even if all coefficients AJ=0 for |J| odd.
+For example, under the Jordan-Wigner transformation,
+|1⟩⟨1| = (1−Z)/2 is even since Z = −iγ1γ2, but |0⟩⟨1| =
+(X + iY )/2 = (γ1 + iγ2)/2 is not. Since an even element
+A commutes with the fermionic number-parity operator
+Π2n
+j=1γj, the parity of the number of fermions is conserved
+by the action of an even operator.
+The covariance matrix Σρ, or Σ(ρ), of a state ρ ∈C2n
+is the 2n × 2n real, anti-symmetric matrix with entries
+(Σρ)jk = i
+2 Tr [ρ[γj, γk]] .
+(I.5)
+It can be brought into the block-diagonal form by a real
+rotation R ∈SO(2n), i.e,
+Σρ = R
+n
+M
+j=1
+
+0
+λj
+−λj
+0
+
+RT .
+(I.6)
+Fermionic Gaussian states ρ are defined as even states of
+the following form
+ρ = C exp
+ i
+2γT hγ
+
+,
+(I.7)
+where γ abbreviates the vector (γ1, γ2, ..., γ2n), (hjk)
+is a real antisymmetric matrix, and C ∈R is a nor-
+malization factor; a pure Gaussian state is defined as
+the limit of a converging sequence of the form above.
+Fermionic Gaussian states represent the ground and ther-
+mal states of non-interacting fermionic systems.
+By
+block-diagonalizing h using a rotation R, we can rewrite
+ρ = 1
+2n
+n
+Y
+j=1
+(1 + iλj˜γ2j−1˜γ2j),
+where ˜γ = Rγ, and λj are the eigenvalues in the block
+diagonalization (I.6). Each λj lies in the interval [−1, 1].
+For Gaussian pure states, each λj ∈{−1, 1}.
+In the theory of fermionic quantum computation, a
+special role is played by those unitary transformations
+which are generated by Hamiltonians of non-interacting
+fermionic systems, i.e. Hamiltonians which are quadratic
+in Majorana fermion operators. Specifically,
+U = exp
+1
+2γT hγ
+
+,
+(I.8)
+where h is an anti-symmetric matrix.
+These unitaries
+are known as fermionic Gaussian unitaries (or fermionic
+linear optics transformations). Conjugation by a Gaus-
+sian unitary effect an automorphism of the algebra C2n
+by rotating the Majorana operators ([34], Theorem 3),
+UγjU † =
+X
+k
+Rjkγk,
+R = exp(2h) ∈SO(2n).
+(I.9)
+See Appendix A for details on the Clifford algebra, and
+Appendix B for Gaussian states and unitaries.
+II.
+FERMIONIC CONVOLUTION
+Let us begin by introducing the concept of a fermionic
+beam splitter, which mixes the Majorana operators of
+fermionic modes. This concept is inspired by the analo-
+gous device in bosonic systems, the bosonic beam splitter.
+A fermionic beam splitter, or convolution unitary, act-
+ing on 2n modes is represented by the Gaussian unitary
+Wθ = exp
+
+θ
+2
+2n
+X
+j=1
+γjγ2n+j
+
+.
+(II.1)
+The unitary Wθ rotates the Majorana operators by
+WθγjW †
+θ = cos θγj −sin θγ2n+j,
+Wθγ2n+jW †
+θ = sin θγj + cos θγ2n+j,
+(II.2)
+for every 1 ≤j ≤2n and θ ∈[−π, π]. The θ = π/4 case
+corresponds to the balanced fermionic beam splitter.
+Definition 1 (Convolution). The fermionic convolu-
+tion of two even states ρ, σ with angle θ ∈(−π, π] is
+ρ ⊠θ σ = Tr2
+h
+Wθ(ρ ⊗σ)W †
+θ
+i
+,
+(II.3)
+
+3
+FIG. 1. The Gaussification G(ρ) is the closest state to the
+states ρ and ⊠kρ.
+where Tr2 [·] denotes partial trace over the second register
+corresponding to the n qubits of σ.
+Fermionic convolution satisfies several desirable prop-
+erties: if both ρ and σ are Gaussian, then ρ ⊠σ is Gaus-
+sian; convolution also commutes with any Gaussian uni-
+tary UG, i.e., (UGρU †
+G) ⊠θ (UGσU †
+G) = UG(ρ ⊠θ σ)U †
+G.
+Additional properties and their detailed proofs can be
+found in Appendix C. For simplicity, we focus θ = π/4
+throughout the main discussion, abbreviating ⊠π/4 as ⊠.
+Let us consider iterative self-convolution ⊠kρ for any
+integer k, defined according to ⊠kρ = (⊠k−1ρ)⊠(⊠k−1ρ)
+and ⊠0ρ = ρ.
+Based on a known central limit the-
+orem [53, 54], the operation ⊠kρ will converge to the
+Gaussian state with the same covariance. We define this
+iterative limit the fermionic Gaussification G(ρ) of ρ; it
+maps a fermionic state ρ to a Gaussian state with the
+same covariance. We provide two proofs of the central
+limit theorem with a quantitative bound on the rate of
+convergence in Appendix D.
+We prove that the fermionic Gaussification G(ρ) is
+in fact the Gaussian projection of ρ:
+it is the clos-
+est fermionic Gaussian state to the given even state ρ
+in terms of the quantum relative entropy D(ρ||σ) =
+Tr(ρ log ρ) −Tr(ρ log σ).
+Proposition 2. For any even state ρ, we have
+min
+σG∈Gauss D(ρ||σG) = D(ρ||G(ρ)) = S(G(ρ)) −S(ρ),
+(II.4)
+Gauss denotes the set of all fermionic Gaussian states.
+If we take the set Gauss to be the set of free states
+F in the resource theory of fermionic quantum compu-
+tation, we can define the relative entropy of fermionic
+non-Gaussianity as
+NGR(ρ) :=
+min
+σG∈Gauss D(ρ||σG),
+(II.5)
+which also equals S(G(ρ)) −S(ρ) by Proposition 2. It is
+easy to show that NGR satisfies the following desirable
+properties which establishes it as a magic measure in the
+resource theory of fermionic quantum computation.
+Proposition 3. The following properties hold for the
+relative entropy of fermionic non-Gaussianity NGR ,
+(1) Faithfulness: NGR(ρ) ≥0 with equality iff ρ is a
+fermionic Gaussian.
+(2) Gaussian-invariance: NGR(UGρU †
+G) = NGR(ρ) for
+any Gaussian unitary UG.
+(3) Additivity under tensor product: NGR(ρ1 ⊗ρ2) =
+NGR(ρ1) + NGR(ρ2).
+Recall the foundational concept of a resource destroy-
+ing map in resource theory [55]: A map λ from states
+to states is resource-destroying if it satisfies the follow-
+ing two conditions: i) it maps all states to free states,
+i.e., λ(ρ) ∈F for any quantum state ρ, and ii) it fixes
+the free states, i.e., λ(σ) = σ for any σ ∈F.
+Natu-
+ral resource-destroying maps are known in resource the-
+ories of coherence [56, 57], asymmetry [58], bosonic non-
+Gaussianity [22], and magic in the stabilizer quantum
+computation [59].
+It is easy to check that the Gaus-
+sification G(·) satisfies the conditions i) and ii) with
+F = Gauss, which motivates the following statement:
+Proposition 4. Gaussification G(·) is a (nonlinear) re-
+source destroying map in the resource theory of fermionic
+quantum computation with free states Gauss.
+Moreover, G(ρ) is also the Gaussification of self-
+convolution state ⊠kρ, i.e.,G(⊠kρ) = G(ρ), the diver-
+gence can be shown to be monotonically decreasing:
+D(⊠kρ||G(ρ)) ≥D(⊠k+1ρ||G(ρ)) for any integer k (See
+Figure. 1). This is the result of the following theorem,
+which we prove in Appendix C.
+Theorem 5. For any even state ρ, we have
+S(⊠k+1ρ) ≥S(⊠kρ),
+∀k.
+(II.6)
+III.
+FERMIONIC GAUSSIAN TESTING
+We have studied the basic properties of fermionic con-
+volution. We now explore the applications of this tool
+to fermionic Gaussian testing.
+The question is: given
+an pure fermionic state ψ, how to decide whether ψ is a
+Gaussian state? This is an important question because
+all non-Gaussian fermionic states have been shown to be
+magic states, which can be used to generate universal
+quantum computation [44].
+We introduce a protocol to test fermionic Gaussianity
+utilizing three copies of the state. This protocol consists
+of fermionic convolution and a swap test to measure the
+overlap between the self-convolved state ψ ⊠ψ and ψ.
+
+4
+Fermionic Gaussian Test
+1. Prepare 2 copies of the pure states ψ
+and compute the self-convolution ψ⊠ψ.
+2. Perform the swap test between ψ ⊠ψ
+and another copy ψ. If the output is 0,
+it passes the test; otherwise, it fails.
+The probability of acceptance in the above fermionic
+Gaussian test is equal to
+Praccept(ψ) = 1
+2 [1 + ⟨ψ| ψ ⊠ψ |ψ⟩] .
+(III.1)
+Theorem 6. For any pure even state |ψ⟩, the pure state
+is a Gaussian state if and only if the the probability of
+acceptance Praccep(ψ) = 1.
+This theorem results from the fact that self-convolution
+is entropy-preserving if and only if the input is Gaussian.
+In particular, for a pure even state ψ, ψ ⊠ψ remains
+pure if and only if ψ is a fermionic Gaussian state; the
+detailed proof is provided in Appendix C. We also ex-
+tend the Gaussian test from states to unitaries using the
+Choi–Jamiołkowski isomorphism in Appendix G.
+It is worth recalling that separability testing relies on
+the principle that a pure bipartite state |ϕ⟩AB is separa-
+ble if and only if the reduced state ρA is pure. This prin-
+ciple underpins the well-known entanglement measure:
+entanglement entropy S(ρA).
+The fermionic Gaussian
+test motivates a new quantitative measure for fermionic
+non-Gaussianity, which we call “non-Gaussian entropy.”
+Non-Gaussian entropy: The non-Gaussian entropy
+of any pure even state ψ is defined as
+NG(ψ) = S(ψ ⊠ψ).
+(III.2)
+Theorem 7. The non-Gaussian entropy for pure even
+states ψ also satisfy properties (1)-(3) in Proposition 3.
+The proof is provided in Appendix C. This justifies the
+use of non-Gaussian entropy as a resource measure in the
+theory of fermionic quantum computation.
+We can also generalize the non-Gaussian entropy to
+higher orders. The k-th order non-Gaussian entropy
+NG(k)(ψ) = S(⊠kψ)
+(III.3)
+also satisfies the above three properties in Theorem 7.
+Moreover, the asymptotic behavior of higher-order non-
+Gaussian entropy approaches the relative entropy of non-
+Gaussianity NGR, i.e,
+lim
+k→∞NG(k)(ψ) = NGR(ψ).
+(III.4)
+This demonstrates that non-Gaussian entropy is a finite-
+shot approximation of Gaussian projection divergence.
+FIG. 2. non-Gaussian entropy NG(k)(ψϕ) of the 4-qubit state
+ψϕ in (III.5) for k = 1, 2, 3, ∞.
+Example: Let us consider a family of quantum states
+on a 4-qubit system,
+|ψϕ⟩= 1
+2
+ |0000⟩+ |0011⟩+ |1100⟩+ eiϕ |1111⟩
+
+,
+(III.5)
+with ϕ ∈(0, 2π). Theses state are shown to be magic
+states for fermionic quantum computation [44]. We com-
+pute the non-Gaussian entropy and the relative entropy
+of non-Gaussianity for these states, plotting the results
+in Fig. 2.
+All entropies are nonzero for ϕ ∈(0, 2π) ,
+and NG(3)(ψϕ) closely approximates NG(∞)(ψϕ); this
+suggests that NG(k) for small k can serve as a good ap-
+proximation of the relative entropy of non-Gaussianity.
+Remark:
+We can also replace the quantum en-
+tropy S(ρ) by the quantum Rényi entropy Sα(ρ) =
+1
+1−α log Tr [ρα], resulting in the k-th order, α Rényi non-
+Gaussian entropy NG(k)
+α (ψ) = Sα(⊠k
+α)(ψ); this is also
+good measure to quantify the fermionic non-Gaussianity
+(Appendix C). To extend the non-Gaussian entropy to
+mixed states, we have two different forms depending on
+the choice of the set free states F for fermionic quan-
+tum computation.
+For F = Gauss as discussed in
+the main text, we can define the the k-th order non-
+Gaussian entropy as NG(k)(ρ) = S(⊠kρ) −S(ρ), which
+also satisfies the properties in Proposition 3.
+If we
+choose F to be the convex hull of Gauss, then we can
+use the technique of convex roof to define the k-th or-
+der non-Gaussian entropy for mixed states
+˜
+NG
+(k)(ρ) =
+minρ=P
+i λi|ψi⟩⟨ψi|
+P
+i λiNG(k)(ψi), where the minimiza-
+tion is taken over all pure state decomposition of ρ. It
+not only satisfies the properties in Proposition 3 but also
+the convexity, i.e.,
+˜
+NG
+(k)(P
+i piρi) ≤P
+i pi ˜
+NG
+(k)(ρi).
+IV.
+CONCLUSION AND DISCUSSION
+In this work, we investigated fermionic convolution
+and its application to testing Gaussian components and
+quantifying non-Gaussian resources. These results offer
+a novel perspective on the role of non-Gaussianity in uni-
+versal fermionic quantum computation.
+
+5
+This work also opens exciting avenues for future explo-
+ration. It will be insightful to relate the Non-Gaussian
+entropy, an important variational information quantity,
+with measures which quantify the classical simulability of
+fermionic non-Gaussian circuits. Additionally, although
+using only three copies already provides an efficient Gaus-
+sian test, it would be useful determine whether three
+copies are indeed optimal.
+Last but not least, a se-
+ries of studies [59–65] have characterized stabilizer states
+through discrete convolution, highlighting the Gaussian
+nature of stabilizer operations. This suggests potential
+for a unified framework for classically simulable states
+and circuits, leveraging their common Gaussian struc-
+tures. Such a framework could pave the way for discover-
+ing new families of classically simulable quantum circuits
+by identifying new Gaussian operators.
+V.
+ACKNOWLEDGMENTS
+We thank Arthur Jaffe, Weichen Gu, and Sasha Berger
+for helpful discussions. This work is supported in part by
+the ARO Grant W911NF-19-1-0302 and the ARO MURI
+Grant W911NF-20-1-0082.
+Note: During the preparation of this manuscript, we
+became aware of another work studying fermionic convo-
+lution and the central limit theorem [66].
+[1] D. Gottesman, The Heisenberg representation of quan-
+tum computers, in Proc. XXII International Colloquium
+on Group Theoretical Methods in Physics, 1998 (1998)
+pp. 32–43.
+[2] S. Bravyi and A. Kitaev, Universal quantum computation
+with ideal clifford gates and noisy ancillas, Phys. Rev. A
+71, 022316 (2005).
+[3] S. Bravyi and D. Gosset, Improved classical simulation of
+quantum circuits dominated by clifford gates, Phys. Rev.
+Lett. 116, 250501 (2016).
+[4] S. Bravyi, G. Smith, and J. A. Smolin, Trading classical
+and quantum computational resources, Phys. Rev. X 6,
+021043 (2016).
+[5] S. Bravyi, D. Browne, P. Calpin, E. Campbell, D. Gosset,
+and M. Howard, Simulation of quantum circuits by low-
+rank stabilizer decompositions, Quantum 3, 181 (2019).
+[6] M. Beverland, E. Campbell, M. Howard, and V. Kli-
+uchnikov, Lower bounds on the non-clifford resources for
+quantum computations, Quantum Sci. Technol. 5, 035009
+(2020).
+[7] J. R. Seddon, B. Regula, H. Pashayan, Y. Ouyang, and
+E. T. Campbell, Quantifying quantum speedups:
+Im-
+proved classical simulation from tighter magic mono-
+tones, PRX Quantum 2, 010345 (2021).
+[8] K. Bu and D. E. Koh, Classical simulation of quantum
+circuits by half Gauss sums, Commun. Math. Phys. 390,
+471 (2022).
+[9] K. Bu and D. E. Koh, Efficient classical simulation of Clif-
+ford circuits with nonstabilizer input states, Phys. Rev.
+Lett. 123, 170502 (2019).
+[10] D. E. Koh, Further extensions of Clifford circuits and
+their classical simulation complexities, Quantum Infor-
+mation & Computation 17, 0262 (2017).
+[11] C. Weedbrook, S. Pirandola, R. García-Patrón, N. J.
+Cerf, T. C. Ralph, J. H. Shapiro, and S. Lloyd, Gaussian
+quantum information, Rev. Mod. Phys. 84, 621 (2012).
+[12] A. Mari and J. Eisert, Positive wigner functions ren-
+der classical simulation of quantum computation efficient,
+Phys. Rev. Lett. 109, 230503 (2012).
+[13] J. Eisert, S. Scheel, and M. B. Plenio, Distilling gaussian
+states with gaussian operations is impossible, Phys. Rev.
+Lett. 89, 137903 (2002).
+[14] G. Giedke and J. Ignacio Cirac, Characterization of gaus-
+sian operations and distillation of gaussian states, Phys.
+Rev. A 66, 032316 (2002).
+[15] R. García-Patrón, J. Fiurášek, N. J. Cerf, J. Wenger,
+R. Tualle-Brouri, and P. Grangier, Proposal for a
+loophole-free bell test using homodyne detection, Phys.
+Rev. Lett. 93, 130409 (2004).
+[16] F. Grosshans and N. J. Cerf, Continuous-variable quan-
+tum cryptography is secure against non-gaussian attacks,
+Phys. Rev. Lett. 92, 047905 (2004).
+[17] B. Q. Baragiola,
+G. Pantaleoni,
+R. N. Alexander,
+A. Karanjai, and N. C. Menicucci, All-gaussian universal-
+ity and fault tolerance with the gottesman-kitaev-preskill
+code, Phys. Rev. Lett. 123, 200502 (2019).
+[18] G. Zheng, W. He, G. Lee, and L. Jiang, Near-optimal per-
+formance of quantum error correction codes, Phys. Rev.
+Lett. 132, 250602 (2024).
+[19] D. Gottesman, A. Kitaev, and J. Preskill, Encoding a
+qubit in an oscillator, Phys. Rev. A 64, 012310 (2001).
+[20] M. G. Genoni, M. G. A. Paris, and K. Banaszek, Quan-
+tifying the non-gaussian character of a quantum state
+by quantum relative entropy, Phys. Rev. A 78, 060303
+(2008).
+[21] M. G. Genoni and M. G. A. Paris, Quantifying non-
+gaussianity for quantum information, Phys. Rev. A 82,
+052341 (2010).
+[22] P. Marian and T. A. Marian, Relative entropy is an ex-
+act measure of non-gaussianity, Phys. Rev. A 88, 012322
+(2013).
+[23] F. Albarelli, M. G. Genoni, M. G. A. Paris, and A. Fer-
+raro, Resource theory of quantum non-gaussianity and
+wigner negativity, Phys. Rev. A 98, 052350 (2018).
+[24] Q. Zhuang, P. W. Shor, and J. H. Shapiro, Resource the-
+ory of non-gaussian operations, Phys. Rev. A 97, 052317
+(2018).
+[25] R. Takagi and Q. Zhuang, Convex resource theory of non-
+gaussianity, Phys. Rev. A 97, 062337 (2018).
+[26] L. Lami, B. Regula, X. Wang, R. Nichols, A. Winter, and
+G. Adesso, Gaussian quantum resource theories, Phys.
+Rev. A 98, 022335 (2018).
+[27] U. Chabaud, D. Markham, and F. Grosshans, Stellar rep-
+resentation of non-gaussian quantum states, Phys. Rev.
+Lett. 124, 063605 (2020).
+[28] M. Walschaers, Non-gaussian quantum states and where
+to find them, PRX Quantum 2, 030204 (2021).
+[29] R. K. Beatriz Dias, Classical simulation of non-gaussian
+
+6
+bosonic circuits, arXiv:2403.19059 (2024).
+[30] O. Hahn, R. Takagi, G. Ferrini, and H. Yamasakir, Clas-
+sical simulation and quantum resource theory of non-
+gaussian optics, arXiv:2404.07115 (2024).
+[31] O. Reardon-Smith, The fermionic linear optical ex-
+tent is multiplicative for 4 qubit parity eigenstates,
+arXiv:2407.20934 (2024).
+[32] L. G. Valiant, Quantum circuits that can be simulated
+classically in polynomial time, SIAM Journal on Com-
+puting 31, 1229 (2002).
+[33] B. M. Terhal and D. P. DiVincenzo, Classical simulation
+of noninteracting-fermion quantum circuits, Phys. Rev.
+A 65, 032325 (2002).
+[34] R. Jozsa and A. Miyake, Matchgates and classical simu-
+lation of quantum circuits, Proceedings of the Royal Soci-
+ety A: Mathematical, Physical and Engineering Sciences
+464, 3089 (2008).
+[35] D. J. Brod, Efficient classical simulation of matchgate
+circuits with generalized inputs and measurements, Phys.
+Rev. A 93, 062332 (2016).
+[36] D. P. DiVincenzo and B. M. Terhal, Fermionic linear op-
+tics revisited, Found. Phys. 35, 1967 (2004).
+[37] S. Bravyi, Lagrangian representation for fermionic linear
+optics, Quantum Info. Comput. 5, 216–238 (2005).
+[38] A. Kitaev, Unpaired majorana fermions in quantum
+wires, Physics-Uspekhi 44, 131 (2001).
+[39] A. Kitaev, Anyons in an exactly solved model and be-
+yond, Annals of Physics 321, 2 (2006).
+[40] S. Giorgini, L. P. Pitaevskii, and S. Stringari, Theory of
+ultracold atomic fermi gases, Rev. Mod. Phys. 80, 1215
+(2008).
+[41] R. Jördens, N. Strohmaier, K. Günter, H. Moritz, and
+T. Esslinger, A mott insulator of fermionic atoms in an
+optical lattice, Nature 455, 204 (2008).
+[42] D. Loss and D. P. DiVincenzo, Quantum computation
+with quantum dots, Phys. Rev. A 57, 120 (1998).
+[43] R. Hanson, L. P. Kouwenhoven, J. R. Petta, S. Tarucha,
+and L. M. K. Vandersypen, Spins in few-electron quan-
+tum dots, Rev. Mod. Phys. 79, 1217 (2007).
+[44] M. Hebenstreit, R. Jozsa, B. Kraus, S. Strelchuk, and
+M. Yoganathan, All pure fermionic non-gaussian states
+are magic states for matchgate computations, Phys. Rev.
+Lett. 123, 080503 (2019).
+[45] B. Dias and R. Koenig, Classical simulation of non-
+gaussian fermionic circuits, Quantum 8, 1350 (2024).
+[46] K. K. Oliver Reardon-Smith, Michał Oszmaniec, Im-
+proved simulation of quantum circuits dominated by free
+fermionic operations, arXiv:2307.12702 (2024).
+[47] S. S. Joshua Cudby, Gaussian decomposition of magic
+states for matchgate computations, arXiv:2307.12654
+(2024).
+[48] A. W. Harrow and A. Montanaro, An efficient test for
+product states with applications to quantum merlin-
+arthur games, in 2010 IEEE 51st Annual Symposium on
+Foundations of Computer Science (2010) pp. 633–642.
+[49] G. Gutoski, P. Hayden, K. Milner, and M. M. Wilde,
+Quantum interactive proofs and the complexity of sepa-
+rability testing, Theory of Computing 11, 59 (2015).
+[50] J. L. Beckey, N. Gigena, P. J. Coles, and M. Cerezo, Com-
+putable and operationally meaningful multipartite entan-
+glement measures, Phys. Rev. Lett. 127, 140501 (2021).
+[51] A. Montanaro and R. d. Wolf, A Survey of Quantum
+Property Testing, Graduate Surveys No. 7 (Theory of
+Computing Library, 2016) pp. 1–81.
+[52] H. Buhrman, R. Cleve, J. Watrous, and R. de Wolf,
+Quantum fingerprinting, Phys. Rev. Lett. 87, 167902
+(2001).
+[53] R. L. Hudson, A quantum-mechanical central limit theo-
+rem for anti-commuting observables, Journal of Applied
+Probability 10, 502–509 (1973).
+[54] R. Hudson, M. Wilkinson, and S. Peck, Translation-
+invariant integrals, and fourier analysis on clifford and
+grassmann algebras, Journal of Functional Analysis 37,
+68 (1980).
+[55] Z.-W. Liu, X. Hu, and S. Lloyd, Resource destroying
+maps, Phys. Rev. Lett. 118, 060502 (2017).
+[56] T. Baumgratz, M. Cramer, and M. B. Plenio, Quantify-
+ing coherence, Phys. Rev. Lett. 113, 140401 (2014).
+[57] A. Streltsov, G. Adesso, and M. B. Plenio, Colloquium:
+Quantum coherence as a resource, Rev. Mod. Phys. 89,
+041003 (2017).
+[58] G. Gour, I. Marvian, and R. W. Spekkens, Measuring
+the quality of a quantum reference frame: The relative
+entropy of frameness, Phys. Rev. A 80, 012307 (2009).
+[59] K. Bu, W. Gu, and A. Jaffe, Quantum entropy and cen-
+tral limit theorem, Proceedings of the National Academy
+of Sciences 120, e2304589120 (2023).
+[60] K. Bu, W. Gu, and A. Jaffe, Discrete quantum gaussians
+and central limit theorem, arXiv:2302.08423 (2023).
+[61] K. Bu, W. Gu, and A. Jaffe, Stabilizer testing and magic
+entropy, arXiv:2306.09292 (2023).
+[62] K. Bu and A. Jaffe, Magic can enhance the quantum
+capacity of channels, arXiv:2401.12105 (2024).
+[63] K. Bu, W. Gu, and A. Jaffe, Entropic quantum cen-
+tral limit theorem and quantum inverse sumset theorem,
+arXiv:2401.14385 (2024).
+[64] Z. W. Kaifeng Bu, Arthur Jaffe, Magic class and the
+convolution group, arXiv:2402.057802 (2024).
+[65] K. Bu, Extremality of stabilizer states, arXiv:2403.13632
+(2024).
+[66] L. Coffman and X. Gao, In preparation (202*).
+[67] K. E. Cahill and R. J. Glauber, Density operators for
+fermions, Physical Review A 59, 1538 (1999).
+[68] M. Nielson, The fermionic canonical commutation rela-
+tions and the jordan-wigner transform, School of Physical
+Sciences The University of Queensland 59, 75 (2005).
+[69] K. Bu, R. J. Garcia, A. Jaffe, D. E. Koh, and L. Li, Com-
+plexity of quantum circuits via sensitivity, magic, and co-
+herence, Communications in Mathematical Physics 405,
+161 (2024).
+[70] R. A. Horn and C. R. Johnson, Matrix analysis (Cam-
+bridge university press, 2012).
+[71] J. Surace and L. Tagliacozzo, Fermionic gaussian states:
+an introduction to numerical approaches, SciPost Physics
+Lecture Notes , 054 (2022).
+[72] F. De Melo, P. Ćwikliński, and B. M. Terhal, The power
+of noisy fermionic quantum computation, New Journal of
+Physics 15, 013015 (2013).
+[73] R. Wille, R. Van Meter, and Y. Naveh, Ibm’s qiskit tool
+chain: Working with and developing for real quantum
+computers, in 2019 Design, Automation & Test in Eu-
+rope Conference & Exhibition (DATE) (IEEE, 2019) pp.
+1234–1240.
+
+7
+CONTENTS
+Appendix
+7
+A. Background in Clifford and Grassmann algebras
+7
+1. Clifford and Grassmann algebras
+7
+2. Grassmann-Clifford Fourier transform
+9
+3. Even states and unitaries
+9
+B. Characterization of Gaussianity by Fourier coefficients
+10
+1. Moments and cumulants
+10
+2. Gaussian states and unitaries
+12
+3. Non-Gaussian measures by Fourier coefficients
+14
+C. Fermionic convolution: definition and properties
+15
+1. Convolution unitary
+15
+2. Properties of fermionic convolution
+16
+3. Properties of non-Gaussian entropy and its generalization to Rényi entropy
+21
+D. Central limit theorem and convergence rate
+22
+E. Properties of Gaussification
+25
+F. Gaussian unitary testing
+25
+Here is an outline of the appendix: In Sec. A, we introduce the mathematical foundations of Clifford and Grassman
+algebras, paying special attention to the the Fourier transform. In Sec. B, we use the Fourier coefficients to defining
+moments, cumulants, and applythese concepts to characterize fermionic Gaussian states and quantify non-Gaussianity.
+In Sec. C, we provide detailed proofs for the properties of fermionic convolution. Sec. D focuses on the central limit
+theorem for the fermionic convolution and provide a quantitative bound on the rate of convergence. In Sec. E, we
+explore the properties of the Gaussification map. In Sec. F, we extend Gaussian testing from states to unitaries.
+Appendix A: Background in Clifford and Grassmann algebras
+We review the mathematical background in the Clifford algebra C2n over generators {γ1, · · · , γ2n} and the Grass-
+mann algebra G2n over generators {η1, · · · , η2n}. For more details, see [37, 67, 68].
+1.
+Clifford and Grassmann algebras
+Definition A.1 (Clifford algebra). A finitely-generated Clifford algebra C2n over 2n generators γ1, · · · , γ2n consists
+of complex polynomials over the generators γ subject to the anti-commutation relation
+{γj, γk} = 2δjk,
+j, k = 1, · · · , 2n.
+In this work, we also require the generators to be self-adjoint γ∗
+j = γj. The algebra C2n is 22n-dimensional, with basis
+elements {γJ : J ⊂[2n]} indexed by ordered subsets of [2n] = {1, · · · , 2n} according to
+γJ = γJ1γJ2 · · · γJ|J|.
+Note that self-adjointness of the generators is not a standard requirement in mathematics literature, so strictly
+speaking C2n should be denoted the Majorana algebra. However, we will continue referring to C2n as the Clifford
+algebra in this context in line with the terminology used in [54].
+The Jordan-Wigner transform faithfully represents the Clifford algebra C2n on the space Hn of n-qubit operators.
+The self-adjoint generators γ∗
+j = γj are represented as Hermitian Pauli operators, and the generated basis {γJ} is
+orthonormal under the Hilbert-Schmidt inner product
+⟨A, B⟩= 1
+2n Tr(A†B),
+A, B ∈Hn.
+(A.1)
+
+8
+Using this representation, we identify
+Tr(1C2n) = 2n
+Tr(γJ̸=∅) = 0.
+(A.2)
+Definition A.2 (Grassmann algebra). A finitely generated Grassmann algebra G2n over 2n generators η1, . . . , η2n
+consists of complex polynomials over η subject to the multiplication rules:
+η2
+a = 0,
+{ηa, ηb} = 0 when a ̸= b.
+(A.3)
+The Grassmann basis {ηJ} is defined analogously to the Clifford case.
+We use the orthonormal representation of 2n Grassmann generators on a 2n-qubit Hilbert space H2n as
+ηj = Z⊗j−1 ⊗σ+ ⊗I⊗2n−j, ∀j ∈[2n].
+(A.4)
+Here σ+ =
+√
+2 |0⟩⟨1|, which satisfies Zσ+ = −σ+Z = σ+. Note that the 2n generators only span a subspace of H2n.
+The generated basis {ηJ}J⊂[2n] is orthonormal under the Hilbert-Schmidt product
+⟨A, B⟩=
+1
+22n Tr(A†B).
+(A.5)
+Recall that a ∗-representation of an algebra is one on which the ∗-operator is represented by conjugate-transpose.
+Unlike the Clifford case, there is no faithful ∗-representation of the Grassmann algebra with Hermitian generators
+η†
+j = ηj. To see this, η∗
+j = ηj implies that the ∗-representation of generators must have real eigenvalues, but nilpotency
+η∗
+j ηj = 0 imply that the representation must be trivial. In light of this, we cannot directly use the Hilbert-Schmidt
+formula to define the inner product, which are instead defined as
+⟨ηJ, ηK⟩=
+1
+22n (−1)|J|(|J|−1)/2Tr(ηJηK),
+∥A∥2
+2 = ⟨A, A⟩.
+(A.6)
+This is the Hilbert-Schmidt product upon manually enforcing η†
+j = ηj. Using this representation, we identify
+Tr(1G2n) = 22n,
+Tr(ηJ̸=∅) = 0.
+(A.7)
+We also need the anti-commuting tensor product when dealing with transformation between algebras.
+Definition A.3 (Anti-commuting tensor product). Given two finitely generated algebras A = ⟨{a1, · · · , an}⟩and
+B = ⟨{b1, · · · , bm}⟩, the anti-commuting tensor product A ⊗f B is is generated by
+{aj ⊗f 1 : 1 ≤j ≤n} ∪{1 ⊗bk : 1 ≤k ≤m}.
+(A.8)
+Multiplication is defined by the following relation,
+(aj ⊗f 1)(1 ⊗f bk) = −(1 ⊗f bk)(aj ⊗f 1).
+(A.9)
+To simplify notation, we typically equate aj, bk with their equivalents in A ⊗f B, leading to the expression ajbk =
+−bkaj as shown in equation (A.9). We resort to the full notation only when explicit clarification of spaces is necessary.
+Definition A.4 (Even subspace). The even subspace (subalgebra) AE of a finitely-generated algebra A is spanned by
+the products of an even number of generators i.e., all nontrivial terms in the polynomial expansion are of even degree.
+In this work, we will focus the even space with following isomorphism
+A ⊗f BE ∼= A ⊗BE,
+(A.10)
+where A and B could be either the Clifford algebra C2n or the Grassmann algebra G2n. This identification exploits
+the property that even elements bK commute with aJ irrespective of using ⊗or ⊗f:
+(aJ ⊗f 1)(1 ⊗bK) ∈A ⊗f BE ↔aJ ⊗bK ∈A ⊗BE
+(A.11)
+The reason we primarily focus on the even subspace is that the desirable mathematical properties of fermion operations
+are typically defined in A ⊗f B but, operationally, we can only access the algebra A ⊗B.
+
+9
+2.
+Grassmann-Clifford Fourier transform
+The Clifford algebra is intricately related to the Grassmann algebra by a Fourier transform which effectively cor-
+responds to a formal relabeling of generators.
+Here, we recall the Grassmann algebra and consider this Fourier
+transform, which to the best of our knowledge appeared under the name of “moment-generating function” in [54].
+Recall that the classical Fourier transform is the integral with respect to kernel eit·x as follows
+F[f](t) =
+Z
+eit·xf(x) dx.
+(A.12)
+Hence, we consider the following kernel in the definition of the Grassman-Clifford Fourier transform,
+eF
+with F := γT η =
+X
+j
+γjηk ∈C2n ⊗f G2n.
+(A.13)
+The kernel expands into the algebra basis as
+eF =
+X
+J
+(−1)j(j−1)/2ηJγJ =
+X
+J
+ηJγ†
+J.
+(A.14)
+where j ≡|J| is the size (degree) of the index (monomial). To see this, the polynomial expansion of eF is trivial
+after the 2n-th degree. In the k-th degree (in γ or η), the 1/k! Taylor coefficient cancels with the k! ways of picking
+nontrivial terms across identical products, and reordering ηJ1γJ1 · · · ηJjγJj into ηJγJ requires j(j −1)/2 swaps.
+Denote by TrC and TrG the partial trace over the Clifford and Grassmann algebras, respectively, then
+ΞA(η) = F[A](η) = TrC
+ eF A
+
+= 1
+2n
+X
+J
+AJ TrC(ηJγ†
+JγJ) =
+X
+J
+AJηJ,
+(A.15)
+is the Grassman-Clifford Fourier transform.
+The conjugate action of Gaussian unitaries can be rewritten in the
+Grassmann formalism as
+ΞUAU †(η) = ΞA(Rη),
+(A.16)
+where ΞA(Rη) means substituting ηj 7→P
+k Rjkηk in the expression of ΞA(η).
+3.
+Even states and unitaries
+Recall that an element A ∈C2n is even iff its expansion in the majorana basis only contains nontrivial even-degree
+terms. In this section, we derive two operational tests which distinguish when a state ρ or unitary U is even. We
+work in the Jordan-Wigner representation of C2n.
+Proposition A.1. An operator A ∈C2n is even if and only if
+[A, Z⊗n] = 0.
+(A.17)
+Note that Z⊗n = (−i)nγ[2n] is proportional to the parity operator γ[2n] on C2n.
+Proposition A.2. A unitary U ∈C2n is even if and only if
+Z⊗nU|+⟩⊗n = UZ⊗n|+⟩⊗n.
+(A.18)
+Proof. By Proposition A.1, U is even iff UZ⊗n = Z⊗nU. This holds if and only if they share the computational
+eigenbasis {|x⟩: x ∈{0, 1}n}.
+Proposition A.3. A state ρ is even if and only if
+ρ = Z⊗nρZ⊗n.
+(A.19)
+Proof. This follows from commutativity in Proposition A.1.
+Note that in this context, a state being “even” means that it has definite computational-basis parity, not specifically
+even computational-basis parity. For example, both |0⟩and |1⟩are even elements of C2n, but |+⟩is not.
+Lemma A.4 (Even state test). A pure state |ψ⟩is even iff (|ψ⟩⟨ψ| , Z⊗n |ψ⟩⟨ψ| Z⊗n) passes the swap test.
+Lemma A.5 (Even unitary test). A unitary U is even iff (Z⊗nU|+⟩⊗n, UZ⊗n|+⟩⊗n) passes the swap test.
+
+10
+Appendix B: Characterization of Gaussianity by Fourier coefficients
+In this section, we introduce Fourier coefficients, moments, and cumulants for the fermionic system. These quantities
+are used to characterize fermionic Gaussian operators and quantify non-Gaussianity.
+1.
+Moments and cumulants
+The moments and cumulants of a state ρ ∈C2n are defined analogous to their classical statistics counterparts:
+moments are overlaps with basis projective operators, while cumulants are specific combinations of moments that are
+additive under convolution.
+Definition B.1 (Moments). Given a multi-index J ⊂[2n], the J-th moment of a n-qubit state ρ ∈C2n is
+ρJ = Tr(γ†
+Jρ).
+(B.1)
+The moment-generating operator (or function) Ξρ ∈G2n is the Fourier transform of ρ:
+Ξρ(η) =
+X
+J
+ρJηJ.
+(B.2)
+Note that the orthonormality of {γJ} also implies
+ρ = 1
+2n
+X
+J
+ρJγJ ∈C2n.
+(B.3)
+Any state is uniquely determined by its moments { ρJ }. Since i|J|γJ is a Hermitian with eigenvalues ±1, |ρJ| =
+| Tr
+h
+γ†
+Jρ
+i
+| ≤1. The orthonormal moment expansion in equation (B.3) also implies
+X
+J⊂[2n]
+|ρJ|2 = 2n Tr
+
+ρ2
+.
+We define the degree-dependent moment weight, which we show to be a Gaussian unitary-invariant.
+Definition B.2 (Moment weight). Given a state ρ, the k-th moment weight is
+Wk(ρ) =
+X
+|J|=k
+|ρJ|2.
+(B.4)
+And the total moment weight is
+IM(ρ) =
+2n
+X
+k=0
+jWk(ρ).
+(B.5)
+The total moment weight is also called sensitivity [69], which has been shown to be useful in the study of quantum
+circuit complexity.
+Proposition B.1. The k-th moment weight is Gaussian unitary-invariant: for every integer 0 ≤k ≤2n:
+Wk(UGρU †
+G) = Wk(ρ).
+(B.6)
+Consequently, the total moment weight is also preserved,
+IM(UGρU †
+G) = IM(ρ).
+(B.7)
+Proof. Fixing 0 ≤k ≤2n, consider the k-th order tensor (Σ(k)
+ρ )l1,...,lk with li ∈[2n],
+(Σ(k)
+ρ )l1,...,lk =
+(
+ρl1,..,lk,
+if l1, .., lk are all different,
+0,
+otherwise.
+
+11
+It is easy to see that
+Σ(k)
+ρ
+
+2
+2 := P
+l1,..,lk |(Σ(k)
+ρ )l1,...,lk|2 = Wk(ρ). We need to show that
+Σ(k)
+ρ
+
+2
+2 =
+Σ(k)
+UGρU†
+G
+
+2
+2 for
+any Gaussian unitary UG which corresponds to a generator rotation R such that UGγU †
+G = Rγ. Then
+(Σ(k)
+UGρU †
+G)l1,...,lk =
+X
+j1,..,jk
+ρj1...,jk
+k
+Y
+i
+Rji,li =
+X
+j1,..,jk
+(Σ(k)
+ρ )l1,...,lkM(j1,...,jk),(l1,...,lk),
+(B.8)
+where M(j1,...,jk),(l1,...,lk) = Qk
+i Rji,li ∼= R⊗k is a (2n)k × (2n)k rotation matrix since R is orthogonal. Thus, the
+weights of Ξρ(η) by each degree are equal to the weights of ΞUρU †(η) = Ξρ(Rη) by degree since the degree-k weight
+vector (tensor) Σ(k)
+ρ
+undergoes rotation by R⊗k under the unitary algebra automorphism η 7→Rη.
+Definition B.3 (Cumulants). Given a state ρ, the cumulant-generating operator (or function) Ψρ ∈G2n is
+Ψρ(η) = log Ξρ(η) =
+2n
+X
+k=1
+(−1)k+1 (Ξρ −1G2n)k
+k
+=
+X
+J
+κρ
+JηJ,
+(B.9)
+where κρ
+J is the J-th cumulant of ρ.
+The cumulant-generating element of a quantum state always exists because Ξρ −1G is nilpotent with degree at most
+2n. Additionally, note that by definition, the quadratic cumulants and moments concur for even ρ:
+ρJ = κρ
+J,
+∀J ⊂[2n] with |J| = 2.
+(B.10)
+Similar to the moment weight, we can also define the cumulant weight.
+Definition B.4. Given a state ρ, the j-th cumulant weight is
+Kj(ρ) =
+X
+|J|=j
+|κρ
+J|2.
+(B.11)
+And the total cumulant weight is
+K(ρ) =
+X
+j
+jKj(ρ).
+(B.12)
+Based on the equivalence of the second order moments and cumulants in (B.10), we have the equivalence of the
+corresponding weight W2(ρ) = K2(ρ) for even states ρ.
+Proposition B.2. Given two even states ρ and σ, we have
+Ψρ⊗σ = Ψρ ⊗1 + 1 ⊗Ψσ.
+(B.13)
+Thus, for even states ρ and σ, the cumulant weight is additive, i.e.,
+Kj(ρ ⊗σ) = Kj(ρ) + Kj(σ).
+(B.14)
+Proof. Because Ξρ⊗σ = Ξρ ⊗Ξσ, we have Ψρ⊗σ = log(Ξρ ⊗Ξσ) = log Ξρ ⊗1 + 1 ⊗log Ξσ = Ψρ ⊗1 + 1 ⊗Ψσ.
+The proof above can be relaxed to only requiring σ to be even; we require both inputs to be even for simplicity.
+Proposition B.3. The j-th cumulant weight is Gaussian unitary-invariant, i.e.,
+Kj(UGρU †
+G) = Kj(ρ).
+(B.15)
+Thus the total cumulant weight is also preserved,
+K(UGρU †
+G) = K(ρ).
+(B.16)
+Proof. The proof is similar to that of Proposition B.1. For cumulants, we have
+ΨUρU †(η) = log[ΞUρU †(η)] = log[Ξρ(Rη)] = (log Ξρ)(Rη) = Ψρ(Rη).
+This is because η 7→Rη is an automorphism of the algebra, and algebra automorphisms commutes with all algebraic
+operations defined using addition, scalar multiplication, and algebra multiplication. Here φ is an automorphism means
+that φ(ab) = φ(a)φ(b). In particular, the Grassmann logarithm of the Fourier transform of states, defined as a finite
+power series (B.9), is an algebraic operation. Applying the same argument to Ψρ(Rη) demonstrates that the weights
+of ΨUρU †(η) = Ψρ(Rη) and Ψρ(η), when measured by degree, are identical.
+
+12
+2.
+Gaussian states and unitaries
+Recall that Gaussian states are the ground or thermal states of quadratic Hamiltonians, that is,
+ρ = C exp
+ i
+2γT hγ
+
+,
+(B.17)
+where (hjk) is a real, antisymmetric matrix and C is a normalization constant. We will first show that the Fourier
+transform of the Gaussian state is also Gaussian. The covariance matrix of any state ρ is defined as
+(Σρ)jk = i
+2 Tr [ρ[γj, γk]] = −iTr[(γjγk)†ρ].
+(B.18)
+Since h is a real, antisymmetric matrix, by a standard result in the matrix theory [70], there exists a rotation
+R ∈SO(2n) such that
+RT hR = hD =
+n
+M
+j=1
+
+0
+νj
+−νj
+0
+
+,
+νj ≥0.
+(B.19)
+Using a Gaussian unitary UG to implement the rotation, we can diagonalize ρ according to
+ρD := UGρU †
+G = C exp
+ i
+2γT (RT hR)γ
+
+= C exp
+ i
+2γT hDγ
+
+.
+(B.20)
+The exponential is decomposed as follows,
+exp
+ i
+2γT hDγ
+
+= exp
+
+i
+n
+X
+j=1
+νjγ2j−1γ2j
+
+=
+n
+O
+j=1
+exp(iνjγ1γ2) =
+O
+exp(−νjZ) =
+n
+O
+j=1
+
+e−νj
+0
+0
+eνj
+
+.
+(B.21)
+The normalized expression for a diagonalized Gaussian state is thus
+ρD = C exp
+ i
+2γT hDγ
+
+=
+n
+O
+j=1
+1
+e−νj + eνj
+
+e−νj
+0
+0
+eνj
+
+= 1
+2n
+n
+O
+j=1
+(I −tanh(νj)Z) = 1
+2n
+n
+O
+j=1
+(I + i tanh(νj)γ1γ2).
+(B.22)
+Hence, the Fourier transform is
+ΞρD(η) =
+n
+O
+j=1
+1 + iλjη1η2 = exp
+
+
+n
+X
+j=1
+λjη2j−1η2j
+
+= exp
+1
+2ηT ΣρDη
+
+,
+(B.23)
+where the covariance matrix takes on the block-diagonal form
+ΣρD =
+n
+M
+j=1
+
+0
+λj
+−λj
+0
+
+,
+λj = tanh(νj).
+(B.24)
+Based on the Fourier transform, we obtain the following lemma which can also be found in [37] and [71].
+Lemma B.4 (Diagonalization of Gaussian states). Given a Gaussian state
+ρ = C exp
+ i
+2γT hγ
+
+,
+hjk = −hkj ∈R,
+C ∈R
+(B.25)
+such that h = RhDRT , where hD is of the form (B.19), then the Fourier transform of ρ is
+Ξρ = exp
+1
+2ηT Σρη
+
+,
+(B.26)
+
+13
+where
+Σρ = R
+
+
+n
+M
+j=1
+
+0
+λj
+−λj
+0
+
+RT ,
+λj = tanh(νj).
+(B.27)
+The covariance matrix satisfies 0 ≤ΣT
+ρ Σρ ≤I2n diagonal, with equality if and only if ρ is pure. The entropy is
+S(ρ) =
+n
+X
+j=1
+h
+1 + λj
+2
+
+,
+h(x) = −x log x −(1 −x) log(1 −x).
+(B.28)
+Thus, the covariance matrix can be used to determine the purity of a Gaussian state.
+Lemma B.5 ([37, 72]). A Gaussian state ρ is pure if and only the covariance matrix Σρ satisfies ΣT
+ρ Σρ = I.
+The diagonalization lemma implies that entropy can be traded for higher Gaussian weight.
+Lemma B.6. Given any n-qubit Gaussian state ρ with quadratic weight ρ(2) < n, for every 0 ≤S0 < S(ρ) there
+exists a n-qubit Gaussian state σ such that
+S(σ) = S0,
+W2(σ) > W2(ρ).
+Proof. By the covariance matrix condition in Lemma B.4 and equivalence between l2 norm of covariance matrix and
+moment weight, we have
+W2(ρ) = 1
+2∥Σρ∥2
+2 ≤1
+2∥I2n∥2 = n,
+with equality iff ρ is pure. Let λ = (λ1, · · · , λn) ∈[−1, 1]n be the imaginary components of the eigenvalues of Σρ
+in B.26, consider the map which parameterizes the entropy B.28 in terms of λ(2) = (λ2
+1, · · · , λ2
+n)
+˜S(λ(2)) =
+n
+X
+j=1
+h
+
+
+1 +
+q
+λ2
+j
+2
+
+= S(ρ).
+Here h is the binary entropy, and we have used the symmetry of B.28 under λj 7→−λj. Then ˜S(λ(2)) is monotonically
+decreasing in λ2
+j ∈[0, 1] for each λ2
+j, while by equivalence between l2 norm of covariance matrix and moment weight
+the quadratic weight is strictly increasing in λ2
+j:
+W2(ρ) = 1
+2
+2n
+X
+j,k=1
+|(Σρ)jk|2 =
+X
+j
+|λj|2.
+Thus, for any 0 ≤S0 < S(ρ), we can find λ′ for σ such that ˜S(λ′
+(2)) = S0 < S(ρ) and λ′
+(2) ≥λ(2) component-wise,
+with inequality strict on at least one component (which implies W2(σ) > W2(ρ)).
+As a consequence of the Fourier representation of Gaussian states, we also have Wick’s theorem ([37], equation 17;
+[71], section 3.4). First introduce the notation M|J: Given an n × n matrix M, M|J denotes the restriction of M onto
+the subspaces indexed by J. For example
+
+
+0 1 2
+3 4 5
+6 7 8
+
+
+|{1,3}
+=
+
+0 2
+6 8
+
+,
+(B.29)
+Lemma B.7 (Wick’s theorem). The higher-order moments of an even Gaussian state ρ with covariance Σρ satisfy
+ρJ = Pf[(Σρ)|J]
+(B.30)
+where Pf(M) is the Pfaffian of a 2n × 2n antisymmetric matrix M defined by
+Pf(M) =
+1
+2nn!
+X
+σ∈S2n
+sgn(σ)Mσ1σ2 · · · Mσ2n−1σ2n.
+(B.31)
+
+14
+FIG. 3.
+Non-Gaussian KM(ρ) (blue) and Gaussian weight
+KG(ρ) (red) of the 4-qubit family B.34.
+FIG. 4. Total cumulant weight K(ρ) (Definition B.4) of
+the 4-qubit family B.34.
+Proof. Due to Lemma B.4, the Fourier transform of ρ is
+Ξρ = exp
+1
+2ηT Σρη
+
+= exp
+
+1
+2
+2n
+X
+j,k=1
+(Σρ)jkηjηk
+
+
+= 1G2n +
+2n
+X
+m=1
+1
+2mm!
+
+
+2n
+X
+j,k=1
+(Σρ)jkηjηk
+
+
+m
+.
+Consider the expansion term for ηJ, where |J| = 2m. We need to construct ηJ from the m-th order above. Each way
+of picking corresponds to a permutation σ ∈S2n of J, with the sign of rearranging η’s into ηJ equal to sgn(σ), then
+ρJ =
+1
+2mm!
+X
+σ∈S2n
+(Σρ)σ(j),σ(k) = Pf[(Σρ)|J].
+3.
+Non-Gaussian measures by Fourier coefficients
+The definition of the cumulants κJ imply that they can determine the the quantum states uniquely. The Fourier
+formula (B.26) of Gaussian states show that Gaussian states have vanishing super-quadratic cumulants: κJ = 0 for
+all J with |J| ≥4. Based on this observation, we introduce the Gaussian weight and non-Gaussian weight; they are
+derived quantities from the cumulant weights.
+Definition B.5. Given an even state ρ, the Gaussian weight is
+KG(ρ) = K2(ρ),
+(B.32)
+and the non-Gaussian weight is
+KM(ρ) =
+2n
+X
+j=4
+Kj(ρ).
+(B.33)
+Our previous results have established that the Gaussian weight and non-Gaussian weight can be used to quantify
+the non-Gaussianity of quantum states, as they fulfill the fundamental properties required of a resource measure:
+Proposition B.8. The Gaussian weight KG satifies the following properties:
+(1) Extremality: Among all states with the given entropy 0 ≤S0 ≤n log 2, KG is maximized by Gaussian states.
+(2) Gaussian-invariance: KG(UGρU †
+G) = KG(ρ) for any Gaussian unitary UG.
+
+15
+(3) Additivity under tensor product: KG(ρ ⊗σ) = KG(ρ) + KG(σ) for any even states ρ and σ.
+Proof. Extremality is established in Proposition C.9. Gaussian-invariance follows from Proposition B.1. Additivity
+under tensor product follows the additivity of cumulants in Proposition B.2.
+Proposition B.9. The non-Gaussian weight KM satisfies:
+(1) Extremality: KM(ρ) ≥0, with equality iff ρ is Gaussian.
+(2) Gaussian-invariance: KM(UρU †) = KM(ρ).
+(3) Tensor-product additivity: KM(ρ ⊗σ) = KM(ρ) + KM(σ).
+Proof. Extremality follows from the CLT convergence bound D.4. Due to the definition of KM, Gaussian-invariance
+and additivity follows from Propositions B.1 and B.2.
+The total cumulant weight can also be used as a non-Gaussian measure:
+Proposition B.10. The total weight satisfies the following properties for pure state ψ,
+(1) Faithfulness: K(ψ) ≥2n, with equality iff ψ is Gaussian.
+(2) Gaussian-invariance: K(UG |ψ⟩⟨ψ| U †) = K(|ψ⟩⟨ψ|).
+(3) Tensor-product additivity: K(ψ1 ⊗ψ2) = K(ψ1) + K(ψ2).
+Proof. Faithfulness is established by K ≥2KG with equality iff KG = n iff ρ is pure Gaussian. Due to the definition
+of total weight, Gaussian-invariance and additivity follows from Propositions B.1 and B.2.
+As an example, consider the resource measures Gaussian weight KG, non-Gaussian weight KM, and total weight
+K for the 4-qubit parametrized state ψϕ,
+|ψϕ⟩= 1
+2
+ |0000⟩+ |0011⟩+ |1100⟩+ eiϕ |1111⟩
+
+,
+(B.34)
+with ϕ ∈[0, 2π]. The numerical results are shown in Figure 4. We numerically find that ψπ is maximally non-Gaussian
+among 4-qubit states according to all three measures.
+Appendix C: Fermionic convolution: definition and properties
+We begin by giving a circuit decomposition of the convolution unitary under the standard Jordan-Wigner transform
+in C 1. The properties of fermionic convolution are enumerated and proven in C 2.
+1.
+Convolution unitary
+From here on, we refer to the fermionic beam splitter as the convolution unitary
+Wθ = exp
+
+θ
+2
+2n
+X
+j=1
+γjγ2n+j
+
+.
+(C.1)
+When θ = π/4, the fermionic beam splitter has the following balanced form
+Wπ/4γjW †
+π/4 =
+1
+√
+2γj −1
+√
+2γ2n+j,
+Wπ/4γ2n+jW †
+π/4 =
+1
+√
+2γj + 1
+√
+2γ2n+j.
+(C.2)
+Consider the simplest case, where W (1)
+θ
+denotes the convolution unitary which acts on two 1-qubit inputs:
+W (1)
+θ
+= exp
+
+iθ
+2(XY + Y X)
+
+.
+(C.3)
+
+16
+The decomposition of W (1)
+θ
+in terms of elementary gates is shown in Fig 5. To decompose the multi-qubit convolution
+unitary, we conjugate W (1)
+θ
+with a swapping gadget (Fig 6) which swaps the fermionic operators of two lines. Fig 7
+demonstrates the 4-qubit case with two inputs on lines 0 to 3, 4 to 7, respectively. Circuits are visualized using
+Qiskit [73].
+The 1-qubit gates in Fig 5 are
+X =
+
+0 1
+1 0
+
+,
+H =
+1
+√
+2
+
+1
+1
+−1 1
+
+,
+S =
+
+1
+0
+0 −i
+
+.
+(C.4)
+In the computational basis |00⟩, |01⟩, |10⟩, |11⟩, the 2-qubit gates in Fig 5 and Fig 6 are
+RZ(θ)1→2 =
+
+
+
+1 0 0
+0
+0 1 0
+0
+0 0 1
+0
+0 0 0 eiθ
+
+
+,
+CZ =
+
+
+
+1 0 0
+0
+0 1 0
+0
+0 0 1
+0
+0 0 0 −1
+
+
+,
+SWAP =
+
+
+
+1 0 0 0
+0 0 1 0
+0 1 0 0
+0 0 0 1
+
+
+.
+(C.5)
+FIG. 5. Elementary decomposition of the 1-qubit convolution unitary W (1)
+θ
+. Here Rz(θ) = exp(−iθZ/2).
+FIG. 6. Swap gadget for 2, 3, 4, 5-qubit convolution unitaries. The blue and navy gates are CZ and SWAP, respectively. This
+gadget swaps the two majorana operators associated with the top and bottom lines while leaving others unchanged.
+2.
+Properties of fermionic convolution
+In this subsection, we prove several key properties of fermionic convolution; these properties mimic the convolution
+operations in classical statistics and discrete bosonic systems [59, 60]. These properties highlight the relation between
+fermionic quantum convolution and both quantum and classical information theory. For clarity, we first summarize
+the properties in the following lemma and leave the central limit theorem to Sec. D.
+Lemma C.1 (Summary of properties). For even states ρ, σ and Gaussian unitary UG, fermionic convolution satisfies
+the following properties:
+(1) Commutativity (Corollary C.3): ρ ⊠π/4 σ = σ ⊠π/4 ρ.
+(2) Angle reflectivity (Corollary C.2): ρ ⊠θ σ = ρ ⊠−θ σ.
+(3) Commutativity with Gaussian unitaries (Proposition C.3): UG(ρ⊠σ)U †
+G = (UGρU †
+G)⊠(UGσU †
+G), for any Gaussian
+unitary UG.
+
+17
+FIG. 7. Elementary decomposition of the 4-qubit convolution unitary. The purple “rotate” gadget is W (1)
+θ
+in Fig 5, while the
+blue “swap” gadget is expanded in Fig 6.
+(4) Convolution-multiplication duality (Theorem C.2): Let Ξτ ∈G2n denote the Fourier transform of a quantum state
+τ ∈C2n, and α · η denote the generators αη1, · · · , αη2n, then
+Ξρ⊠σ(η) = Ξρ(cos θ · η)Ξσ(sin θ · η).
+(C.6)
+(5) Entropy inequality (Proposition C.6):
+S(ρ ⊠σ) ≥1
+2S(ρ) + 1
+2S(σ).
+(C.7)
+Equality holds if and only if ρ = σ is equal to a Gaussian state.
+(6) Purity invariance implies normality (Corollary C.4): ρ ⊠ρ is pure if and only if ρ is a Gaussian state.
+We begin by proving the convolution-multiplication duality, which will be helpful to prove other results. It was
+demonstrated for the special case θ = π/4 and ρ = σ in [54], Proposition 5.1. Here, we will provide a generalized
+proof, inspired by Hudson’s approach [54], and also a novel, elementary combinatorial proof. We first introduce the
+following operation on the algebras.
+Definition C.1 (Contraction isomorphism). Given a factor α ∈C, the contraction isomorphism ξα : G2n →G2n
+scales all generators by a scalar, i.e.,
+ξα ηj = αηj,
+(C.8)
+This contraction can be extended to the whole algebra as
+ξαηA = α|A|ηA.
+(C.9)
+Theorem C.2 (Convolution-multiplication duality). For arbitrary ρ and even state σ, the moment-generating oper-
+ator under convolution satisfies the following relation
+Ξρ⊠θσ = (ξcos θΞρ)(ξsin θΞσ),
+(C.10)
+and the cumulant-generating operator under convolution satisfies the following relation
+Ψρ⊠θσ = ξcos θΨρ + ξsin θΨσ.
+(C.11)
+Proof. Equation (C.10) immediately implies (C.11) by taking the logarithm. To prove (C.10), we only need to prove
+the following statement and extend by bilinearity:
+ΞγJ⊠θγK(η) = (ξcos θηJ)(ξsin θηK),
+(C.12)
+
+18
+for all even γJ, γK. The right-hand side of C.12 equals
+cos|J| θ sin|K| θ
+Y
+a∈J
+ηa
+Y
+b∈K
+ηb,
+(C.13)
+is 0 for J ∩K ̸= ∅, and cos|J| θ sin|K| θ Q
+a∈J ηa
+Q
+b∈K ηb for J ∩K = ∅. The left-hand side of (C.12) equals
+γJ ⊠θ γK = Tr2
+h
+Wθ(γJ ⊗γK)W †
+θ
+i
+= Tr2
+
+WθγJγKW †
+θ
+
+.
+(C.14)
+Applying equation (C.2) to the operator inside the trace yields
+WθγJγKW †
+θ =
+Y
+a∈J
+(γj cos θ −γ2n+j sin θ) ·
+Y
+b∈K
+(γk sin θ + γ2n+k cos θ).
+(C.15)
+Note that any component containing γ2n+l will be annihilated by Tr2. If J ∩K = ∅, the he only choice of factors in
+the expansion (C.15) is
+cos|J| sin|J| θ
+Y
+a∈J
+γa
+Y
+b∈K
+γb =⇒ΞγJ⊠θγK(η) = cos|J| sin|J| θ
+Y
+a∈J
+ηa
+Y
+b∈K
+ηb.
+(C.16)
+If J ∩K ̸= ∅, then
+WθγJγKW †
+θ = ±(γl cos θ −γ2n+l sin θ)(γl sin θ + γ2n+l cos θ)(· · · )
+= ±(γ2
+l cos θ sin θ −γ2
+2n+l cos θ sin θ + 2(cos2 θ + sin2 θ)γlγ2n+l)(· · · )
+= ±2γlγ2n+l(· · · )
+(C.17)
+which is also 0 after taking Tr2. This proves that the two sides of equation (C.12) are equal, completing the proof.
+We also provide another proof following Hudson’s method in [54], which may be of independent interest. To do so,
+we need an additional isomorphism.
+Definition C.2 (Exchange isomorphism). The exchange isomorphism S : C2n ⊗C2n →C2n ⊗C2n is defined by
+S(γj ⊗1) = 1 ⊗γj,
+S(1 ⊗γj) = γj ⊗1,
+(C.18)
+extended multiplicatively from generators to the whole algebra.
+Proof. Consider the space C2n ⊗C2n ⊗f G2n, which we relabel as C1 ⊗C2 ⊗f G. Here C1 ⊗C2 is the product space of
+ρ⊗σ. Let eF ∈C2n ⊗f G2n denote the Fourier kernel. First expand the partial traces, note that (S ⊗f 1G→G) (1C1 ⊗eF )
+effectively applies K to the C1, G components of C1 ⊗C2 ⊗f G.
+Ξρ⊠θσ = TrC1[eF (ρ ⊠σ)] = TrC1
+
+eF TrC2[W(ρ ⊗σ)W †]
+
+= TrC1C2
+
+[(S ⊗f 1G→G) (1C1 ⊗eF )](W ⊗f 1G)(ρ ⊗σ ⊗f 1G)(W † ⊗f 1G)
+
+= TrC1C2
+
+(W † ⊗f 1G)[(S ⊗f 1G→G) (1C1 ⊗eF )](W ⊗f 1G)(ρ ⊗σ ⊗f 1G)
+
+.
+(C.19)
+Now consider (W † ⊗f 1G)[(S ⊗f 1G→G) (1C1 ⊗K)](W ⊗f 1G). Recalling the Fourier kernel expansion (A.14), we have
+(S ⊗f 1G→G) (1C1 ⊗eF ) =
+X
+J
+(S ⊗f 1G→G) [(1C1 ⊗1C2 ⊗f ηJ)(1C1 ⊗γ†
+J ⊗f 1G)]
+=
+X
+J
+(1C1 ⊗1C2 ⊗f ηJ)(γ†
+J ⊗1C2 ⊗f 1G)
+= exp
+
+X
+j
+(γj ⊗1C2 ⊗f 1G)(1C1 ⊗1C2 ⊗f ηj)
+
+.
+Unitary conjugation by W † ⊗1G acts on the exponent of the expression above as follows
+(W † ⊗1G) [(γj ⊗1C2 ⊗f 1G)(1C1 ⊗1C2 ⊗f ηj)] (W ⊗1G)
+=
+
+(W † ⊗1G)(γj ⊗1C2 ⊗f 1G)(W ⊗1G)
+
+(1C1 ⊗1C2 ⊗f ηj)
+=
+
+cos θ(γj ⊗1C2 ⊗f 1G) + sin θ(Z⊗n ⊗γj ⊗f 1G)
+
+(1C1 ⊗1C2 ⊗f ηj).
+
+19
+This yields conjugate action on [(S ⊗f 1G→G) (1C1 ⊗K)]
+(W † ⊗f 1G)[(S ⊗f 1G→G) (1C1 ⊗K)](W ⊗f 1G)
+= exp
+
+X
+j
+
+cos θ(γj ⊗1C2 ⊗f 1G) + sin θ(Z⊗n ⊗γj ⊗f 1G)
+
+(1C1 ⊗1C2 ⊗f ηj)
+
+.
+(C.20)
+Note that Z⊗n ⊗γ(2n)
+j
+∼= γ(4n)
+2n+j. Here, to simplify the notation, we used the Jordan-Wigner representation Z⊗n to
+denote its algebraic equivalent. Since σ is even, in the power expansion of the exponential, only terms that are even
+in C2 contribute nontrivially after TrC1C2 in equation (C.19). More precisely, let Φ : C1 ⊗C2 ⊗f G →C1 ⊗C2 ⊗f G be
+the projection operator onto the even subspace of C2 so that Φ(γJ ⊗γK ⊗f ηL) = γJ ⊗γK ⊗f ηL iff γK ∈C2 is even
+else 0, then
+Ξρ⊠θσ = TrC1C2
+
+(W † ⊗f 1G)[(S ⊗f 1G→G) (1C1 ⊗eF )](W ⊗f 1G)(ρ ⊗σ ⊗f 1G)
+
+= TrC1C2
+
+Φ
+
+(W † ⊗f 1G)[(S ⊗f 1G→G) (1C1 ⊗eF )](W ⊗f 1G)
+
+(ρ ⊗σ ⊗f 1G)
+
+.
+(C.21)
+The even-parity projection of (C.20) in the expression above gets rid of the Z⊗n factor, yielding
+Φ(C.20) = exp
+
+X
+j
+[cos θ(γj ⊗1C2 ⊗f 1G) + sin θ(1C1 ⊗γj ⊗f 1G)] (1C1 ⊗1C2 ⊗f ηj)
+
+
+= exp
+
+X
+j
+(γj ⊗1C2 ⊗f 1G)(1C1 ⊗1C2 ⊗f (cos θ · ηj))
+
+exp
+
+X
+j
+(1C1 ⊗γj ⊗f 1G)(1C1 ⊗1C2 ⊗f (sin θ · ηj))
+
+
+= (ξcos θeF1)(ξsin θeF2).
+Here eF1, eF2 are the Fourier kernels defined on (C1, G) and (C2, G) and extended trivially,
+eF1 = exp
+
+X
+j
+(γj ⊗1C2 ⊗f 1G)(1C1 ⊗1C2 ⊗f ηj)
+
+∈C1 ⊗C2 ⊗f G
+eF1 = exp
+
+X
+j
+(1C1 ⊗γj ⊗1G)(1C1 ⊗1C2 ⊗f ηj
+
+∈C1 ⊗C2 ⊗f G.
+Then substituting Φ(C.20) = (ξcos θeF1)(ξsin θeF2) into equation (C.21) yields
+Ξρ⊠σ = TrC1C2
+
+Φ
+
+(W † ⊗f 1G)[(S ⊗f 1G→G) (1C1 ⊗eF )](W ⊗f 1G)
+
+(ρ ⊗σ ⊗f 1G)
+
+= TrC1C2
+
+(ξcos θeF1)(ξsin θeF2)(ρ ⊗σ ⊗f 1G)
+
+= TrC1C2
+
+[(ξcos θeF1)(ρ ⊗1C2 ⊗f 1G)][(ξsin θeF2)(1C1 ⊗σ ⊗f 1G)]
+
+= TrC[(ξcos θeF )(ρ ⊗f 1G)] · TrC[(ξsin θK)(σ ⊗f 1G)] = (ξcos θΞρ)(ξsin θΞσ).
+According to (C.11) , the components of the cumulants under the convolution satisfies the following relation,
+κρ⊠θσ
+J
+= κρ
+J cosj θ + κσ
+J sinj θ.
+(C.22)
+That is, the quadratic cumulants are preserved, while the higher-order cumulants shrink.
+Corollary C.1 (Fixed points of convolution). For any Gaussian state ρG, ρG ⊠θ ρG = ρG.
+Corollary C.2 (Angle-reflectivity). For any even states ρ and σ, we have ρ ⊠θ σ = ρ ⊠−θ σ for all θ.
+Proof. Note that any even state is determined by the cumulant. It is easy to see that the equation C.22 is invariant
+under θ 7→−θ for even ρ, σ, hence ρ ⊠θ σ = ρ ⊠−θ σ .
+
+20
+Corollary C.3 (Commutativity). For any even states ρ and σ, we have ρ ⊠θ σ = σ ⊠θ ρ when cos θ = sin θ.
+Proof. Based on the equation (C.22), the invariance is also preserved under reflection of ρ and σ when cos θ = sin θ.
+Proposition C.3 (Commutativity with Gaussian unitaries). For any Gaussian unitary UG, we have
+UG(ρ ⊠σ)U †
+G = (UGρU †
+G) ⊠(UGσU †
+G).
+(C.23)
+Proof. We only need to prove that ΞUG(ρ⊠σ)U †
+G = Ξ(UGρU †
+G)⊠(UGσU †
+G). Since the conjugate action of the Gaussian
+unitary UG corresponds to a rotation R as in (A.16), then left-hand side can be written as
+ΞUG(ρ⊠σ)U †
+G(η) = Ξρ⊠σ(Rη) = Ξρ(Rη)Ξσ(Rη).
+Apply convolution-multiplication duality, the right-hand side can be
+Ξρ(Rη)Ξσ(Rη) = ΞUGρU †
+G(η)ΞUGσU †
+G(η) = Ξ(UGρU†
+G)⊠(UGσU †
+G)(η).
+The Fourier transforms are equal iff the states are equal, completing the proof.
+Lemma C.4 (Angle-reflection+exchange symmetry of the convolution unitary). For all even basis elements γJ, γK,
+S[Wθ(γJ ⊗γK)W †
+θ ] = W−θ(γK ⊗γJ)W †
+−θ.
+(C.24)
+Proof. Let φθ : C2n ⊗C2n →C2n ⊗C2n denote the isomorphism φθ(A) = WθAW †
+θ , then (C.24) claims S ◦φθ = φ−θ
+on the even subspace of C2n ⊗C2n. To see this, recall the conjugate action of the convolution unitary,
+φθ(γj) = cos θγj −sin θγ2n+j,
+φθ(γ2n+j) = sin θγj + cos θγ2n+j,
+is invariant under θ 7→−θ, γj ↔γ2n+j, where γj ↔γ2n+j is exactly the action of S on C2n⊗C2n for even elements.
+Lemma C.5. For any even states ρ, σ, let ρ ˜⊠θ σ := Tr1
+h
+Wθ(ρ ⊗σ)W †
+θ
+i
+be the complementary channel, we have
+ρ ˜⊠θ σ = ρ ⊠θ σ.
+(C.25)
+Proof. ρ ˜⊠−θ σ = Tr1
+h
+Wθ(ρ ⊗σ)W †
+θ
+i
+= Tr1 [φθ(ρ ⊗σ)] = Tr2 [(S ◦φθ)(ρ ⊗σ)] = Tr2 [φ−θ(ρ ⊗σ)] = ρ ⊠−θ σ.
+Proposition C.6 (Entropy inequality under fermionic convolution). Given two even states ρ and σ, we have
+S(ρ ⊠θ σ) ≥1
+2S(ρ) + 1
+2S(σ),
+(C.26)
+equality holds iff ρ = σ is a Gaussian state.
+Proof. Recall that ρ ⊠θ σ, ρ ˜⊠θ σ are the two reduced states of τab = W(ρ ⊗σ)W †, then by the subadditivity of
+quantum entropy and Lemma C.5,
+S(ρ) + S(σ) = S(τAB) ≤S(ρ ⊠θ σ) + S(ρ ˜⊠θ σ) = 2S(ρ ⊠θ σ).
+(C.27)
+Equality holds iff subadditivity is saturated, which means
+W(ρ ⊗σ)W † = (ρ ⊠θ σ) ⊗(ρ ˜⊠θ σ).
+This is also equivalent to
+ρ ⊗σ = W †[(ρ ⊠θ σ) ⊗(ρ ⊠θ σ)]W.
+(C.28)
+By taking the two reduced states of the right hand side, which are equal to ρ and σ respectively. Thus,
+ρ = (ρ ⊠θ σ) ⊠(ρ ⊠θ σ) = (ρ ⊠θ σ) ˜⊠θ (ρ ⊠θ σ) = σ.
+(C.29)
+Moreover, by applying the previous argument iteratively and the central limit theorem for fermionic convolution in
+Proposition D.1, we have
+ρ = (ρ ⊠θ ρ) ⊠θ (ρ ⊠θ ρ) = ... = G(ρ).
+(C.30)
+Therefore, ρ = σ is a fermionic Gaussian state.
+
+21
+FIG. 8.
+Non-Gaussian Rényi entropy NG(k)
+2
+of the 4-qubit
+parametrized state ψϕ in (B.34).
+FIG. 9.
+Non-Gaussian Rényi entropy NG(k)
+∞of the 4-qubit
+parametrized state ψϕ in (B.34).
+One direct implication of the entropy inequality is the monotonicity of quantum entropy under fermionic convolution.
+Proposition C.7. For any even state ρ, we have
+S(⊠k+1ρ) ≥S(⊠kρ), ∀k.
+(C.31)
+Corollary C.4 (Purity invariance implies normality). ρ ⊠ρ is pure if and only if ρ is a pure Gaussian state.
+Proof. If ρ is pure Gaussian, then ρ⊠ρ = ρ is pure by Corollary C.1. The converse implies S(ρ) = 0 and the saturation
+condition of the entropy inequality ρ = G(ρ).
+Proposition C.8 (Gaussian characterization by maximum entropy). Let M be a real and antisymmetric 2n × 2n
+matrix with M T M ≤I, and Q(M) be the set of all even n-qubit quantum states with covariance matrix M, then the
+unique Gaussian state ρG ∈Q(M) has maximum entropy.
+Proof. The Gaussian ρG ∈Q(M) is unique since Gaussian states are specified by their covariance matrix. Moreover,
+since covariance matrix is preserved under convolution, i.e., Σρ⊠ρ = Σρ, then ρ⊠ρ is also in Q(M) for any ρ ∈Q(M).
+Let ρ0 = argmaxρ∈Q(M)S(ρ), then S(ρ0 ⊠ρ0) = S(ρ0). By the entropy inequality in Proposition C.6, we have that
+ρ0 is a Gaussian state.
+Proposition C.9 (Gaussian characterization by maximum Gaussian weight). Given 0 ≤S0 ≤n log 2, define
+R(S0) = {n-qubit state ρ : ρ even and S(ρ) = S0}.
+(C.32)
+If ρ ∈R(S0) has maximum Gaussian weight KG, then is Gaussian.
+Proof. For the sake of contradiction, suppose that a non-Gaussian state ρ ∈R(S0) has maximum Gaussian weight
+KG, then S(G(ρ)) > S(ρ). Then applying Lemma B.6 to G(ρ) with S0 = S(ρ) implies the existence of a Gaussian
+state σ satisfying S(σ) = S0 < S(ρ) and KG(σ) > KG(ρ).
+Applying this to the extremal case S0 = 0, we obtain the Gaussian-weight characterization of pure Gaussian states.
+Corollary C.5. A n-qubit even state ψ is Gaussian if and only if KG(ψ) = n.
+3.
+Properties of non-Gaussian entropy and its generalization to Rényi entropy
+Recall that the non-Gaussian entropy is defined as
+NG(ψ) = S(ψ ⊠ψ).
+(C.33)
+Theorem C.10 (Properties of non-Gaussian entropy). The non-Gaussian entropy NG(ψ) for an even pure state ψ
+satisfies the following properties:
+(1) Faithfulness: NG(ψ) ≥0 with equality iff ψ is a fermionic Gaussian.
+
+22
+(2) Gaussian invariance: NG(UG |ψ⟩⟨ψ| U †
+G) = NG(|ψ⟩⟨ψ|) for any Gaussian unitary UG.
+(3) Additivity under tensor product: NG(ψ1 ⊗ψ2) = NG(ψ1) + NG(ψ2).
+Proof. (1) NG(ψ) ≥0 follows from definition with equality iff S(ψ ⊠ψ) = S(ψ). By the saturation condition of the
+entropy inequality in Proposition C.6, we have NG(ψ) = 0 iff ψ is a fermionic Gaussian.
+(2) Gaussian unitary-invariance follows from convolution commuting with Gaussian unitary in Proposition C.3.
+(3) NG-additivity follows from (ψ1 ⊗ψ2) ⊠(ψ1 ⊗ψ2) = (ψ1 ⊠ψ2) ⊗(ψ1 ⊠ψ2).
+Consider extending non-Gaussian entropy to higher-order, Rényi non-Gaussian entropy as follows
+NG(k)
+α (ψ) = Sα(⊠kψ),
+(C.34)
+where the α-Rényi entropy Sα with α ∈[0, +∞] is defined as
+Sα(ρ) =
+1
+1 −α Tr [ρα] .
+(C.35)
+The Rényi generalization NG(k)
+α
+also satisfies the essential properties of faithfulness, Gaussian invariance, and addi-
+tivity under tensor product, making it a valuable measure for quantifying fermionic non-Gaussianity.
+Let us again consider the 4-qubit parametrized state ψϕ in (B.34), |ψϕ⟩= 1
+2
+ |0000⟩+ |0011⟩+ |1100⟩+ eiϕ |1111⟩
+
+,
+with ϕ ∈[0, 2π]. This degenerates to the von-Neumann definition (Fig 2) with α = 1. The α = 2, ∞cases are shown
+in Fig 8 and 9. When α = 0, for all k > 0 we have
+NG(k)
+0 (ψϕ) =
+(
+0,
+ϕ ∈{0, 2π},
+4 log 2,
+otherwise.
+(C.36)
+Appendix D: Central limit theorem and convergence rate
+This section derives the central limit for fermionic convolution and provides a bound on its rate of convergence.
+Let us define the k-th iteration of self-convolution
+⊠k+1
+θ
+ρ = (⊠kρ) ⊠θ (⊠kρ),
+with
+⊠0 ρ = ρ.
+(D.1)
+Proposition D.1 (Central limit theorem). For any even state ρ, we have
+lim
+k→∞⊠k
+θρ = G(ρ).
+(D.2)
+Proof. We prove the results for θ = π/4, general case follows easily. An even state is Gaussian if and only if it has
+vanishing super-quadratic cumulants, i.e., κJ = 0 for any J with |J| ≥4. The convolution-multiplication duality (C.11)
+implies
+κρ⊠θρ
+J
+= κρ
+J cosj θ + κρ
+J sinj θ.
+This yields the following equation for j-th order cumulants
+κ⊠k+1ρ
+J
+= 2
+ 1
+√
+2
+j
+κ⊠kρ
+J
+= 2k(1−j/2)κρ
+J.
+(D.3)
+Note that j = |J| is always even. Therefore,
+lim
+k→∞2k(1−j/2)κρ
+J =
+(
+κρ
+J
+j = 2,
+0
+otherwise.
+These are exactly the cumulants of G(ρ).
+Next, we study the convergence rate of the central limit theorem (CLT). We prove results for θ = π/4, and the
+approach can be readily extended to more general cases.
+
+23
+Lemma D.2. For any linear operators X, Y , we have
+∥eX+Y −eX∥≤∥Y ∥e∥X∥+∥Y ∥,
+where ∥A∥= sup∥⃗x∥≤1 ∥A⃗x∥denotes the operator norm.
+Proof. Denote x = ∥X∥, y = ∥Y ∥. Expand the series and use submultiplicativity and subadditivity:
+∥eX+Y −eX∥≤
+∞
+X
+n=0
+1
+n!∥(X + Y )n −Xn∥
+≤
+∞
+X
+n=0
+1
+n!
+∞
+X
+k=0
+n
+k
+
+xkyn−k −xn
+=
+∞
+X
+n=0
+1
+n!
+n−1
+X
+k=0
+n
+k
+
+xkyn−k
+=
+∞
+X
+n=0
+1
+n!
+n−1
+X
+k=0
+n −1
+k −1
+
+xkyn−k +
+n−1
+X
+k=0
+n −1
+k
+
+xkyn−k.
+Let us consider the first term in the sum, substitute k 7→k + 1 and factor out an x
+n−1
+X
+k=0
+n −1
+k −1
+
+xkyn−k = x
+n−2
+X
+k=0
+n −1
+k
+
+xky(n−1)−k = x[(x + y)n−1 −xn−1] = x(x + y)n−1 −xn.
+The second term is defined similarly
+n−1
+X
+k=0
+n −1
+k
+
+xkyn−k = y(x + y)n−1.
+Substitute back into the expression, which now simplifies neatly
+∥eX+Y −eX∥≤
+∞
+X
+n=0
+(x + y)n −xn
+n!
+= ex+y −ex = ex(ey −1) ≤yexey.
+Lemma D.3. For n-qubit states ρ, σ, we have
+∥ρ −σ∥2 = 1
+2n ∥Ξρ −Ξσ∥2 ≤∥Ξρ −Ξσ∥,
+where ∥· ∥2 denotes the L2-norm,
+Proof. This equation comes from the fact that L2 norm is preserved under the Grassmann-Clifford Fourier transform.
+The inequality comes from the bound on the operator norm by the L2 norm.
+Theorem D.4 (Convergence rate of central limit theorem). For a n-qubit even state ρ
+∥⊠k ρ −G(ρ)∥2 ≤
+p
+KM(ρ)
+2k
+exp
+p
+KG(ρ) + 2−kp
+KM(ρ)
+
+,
+(D.4)
+where KG and KM denote the Gaussian and non-Gaussian weights in definition B.5.
+Proof. Recall the cumulant-generating operator under the convolution is equal to
+Ψ⊠kρ =
+X
+J
+2−k(j/2−1)κρ
+JηJ,
+while the limit state G(ρ) has the following form
+ΨG(ρ) =
+X
+|J|=2
+κρ
+JηJ.
+
+24
+The operator norm of Ψ⊠kρ −ΨG(ρ) is bounded by the L2 norm
+∥Ψ⊠kρ −ΨG(ρ)∥≤∥Ψ⊠kρ −ΨG(ρ)∥2 =
+s X
+|J|>2
+|2−k(|J|/2−1)κJ|2 ≤2−kp
+KM(ρ).
+By using Lemma D.3 and substituting X 7→ΨG(ρ), Y 7→Ψ⊠kρ −ΨG(ρ):
+∥⊠k ρ −G(ρ)∥2 ≤∥Ξ⊠kρ −ΞG(ρ)∥= ∥exp Ψ⊠kρ −exp ΨG(ρ)∥= ∥eX+Y −eX∥.
+Invoke Lemma D.2 to obtain the desired bound:
+∥⊠k ρ −G(ρ)∥2 ≤∥eX+Y −eX∥≤yex+y =
+p
+KM(ρ)
+2k
+exp
+p
+KG(ρ) + 2−kp
+KM(ρ)
+
+.
+where the relevant quantities y = ∥Y ∥, x = ∥X∥are
+x = ∥ΨG(ρ)∥≤∥ΨG(ρ)∥2 =
+p
+KG(ρ),
+y = ∥Ψ⊠kρ −ΨG(ρ)∥≤2−kp
+KM(ρ).
+One may also consider a version of the central limit theorem which consumes an arbitrary positive integer n instead
+of 2k number of copies of the state ρ. For each m > 0, define the convolution angle θm ∈(0, π/2) which satisfies
+cos2 θm =
+m
+m + 1.
+(D.5)
+Consider a version of iterated convolution linear in the number of copies so that ⊠kρ requires k copies of ρ
+⊠(1)ρ = ρ,
+⊠(k+1)ρ = (⊠(k)ρ) ⊠θk ρ.
+(D.6)
+In particular, ⊠(2)ρ = ρ ⊠π/4 ρ, ⊠(3)ρ = (ρ ⊠π/4 ρ) ⊠θ2 ρ, etc. We now compute the cumulants of iterated convolution
+by applying additivity (C.22). Let us first consider the quadratic case
+κ⊠(n)ρ
+J
+= κρ
+J sin2 θn + κ⊠(n−1)ρ
+J
+cos2 θn = 1
+nκρ
+J + n −1
+n
+κ⊠(n−1)ρ
+J
+= 1
+nκρ
+J + n −1
+n
+
+1
+n −1κρ
+J + n −1
+n −2κ⊠(n−2)ρ
+J
+
+= · · · = κρ
+J,
+where |J| = 2.
+(D.7)
+In general, for the cumulant with |J| = 2m, we have
+κ⊠(n)ρ
+J
+= κρ
+J sin2m θn + κ⊠(n−1)ρ
+J
+cos2m θn =
+1
+nm κρ
+J +
+n −1
+n
+m
+κ⊠(n−1)ρ
+J
+=
+1
+nm κρ
+J +
+n −1
+n
+m 
+1
+(n −1)m κρ
+J +
+n −2
+n −1
+m
+κ⊠(n−2)ρ
+J
+
+=
+1
+nm κρ
+J + 1
+nm κρ
+J +
+n −2
+n
+m
+κ⊠(n−2)ρ
+J
+=
+1
+nm κρ
+J + 1
+nm κρ
+J +
+n −2
+n
+m 
+1
+(n −2)m κρ
+J +
+n −3
+n −2
+m
+κ⊠(n−3)ρ
+J
+
+=
+1
+nm κρ
+J + 1
+nm κρ
+J + 1
+nm κρ
+J +
+n −3
+n
+m
+κ⊠(n−3)ρ
+J
+= · · · =
+1
+nm−1 κρ
+J.
+(D.8)
+Applying this to the proof in theorem D.4, we obtain
+∥Ψ⊠(n)ρ −ΨG(ρ)∥≤∥Ψ⊠(m)ρ −ΨG(ρ)∥2 =
+s X
+|J|>2
+n1−|J|/2κJ|2 ≤1
+n
+p
+KM(ρ).
+(D.9)
+Following the line of reasoning in the proof, the final answer replaces
+p
+KM(ρ)/2k 7→
+p
+KM(ρ)/n and results in
+∥⊠(n) ρ −G(ρ)∥2 ≤
+p
+KM(ρ)
+n
+exp
+p
+KG(ρ) +
+p
+KM(ρ)/n
+
+.
+(D.10)
+
+25
+Appendix E: Properties of Gaussification
+Lemma E.1. For any fermionic state ρ and fermionic Gaussian unitary U,
+G(UρU †) = UG(ρ)U †.
+(E.1)
+Proof. Apply the central limit theorem in Proposition D.1 and convolution commuting with Gaussian unitaries in
+Proposition C.3 to obtain
+G(UρU †) = lim
+k→∞⊠k(UρU †) = U
+
+lim
+k→∞⊠kρ
+
+U † = UG(ρ)U †.
+Lemma E.2. For even ρ and σ with G(ρ) = G(σ), G(ρ ⊠σ) = G(ρ).
+Proof. Convolution preserves quadratic cumulants, and G(τ1) = G(τ2) iff their quadratic cumulants are equal.
+Theorem E.3. For any even state ρ, the following equation holds
+min
+σG∈Gauss D(ρ||σG) = D(ρ||G(ρ)) = S(G(ρ)) −S(ρ),
+(E.2)
+where the set Gauss denotes the set of all fermionic Gaussian states.
+Proof. For every state ρ, G(ρ) has the same covariance as ρ. Then
+D(ρ||σG) −D(ρ||G(ρ))
+= Tr [ρ log ρ] −Tr [ρ log σG] −Tr [ρ log ρ] + Tr [ρ log G(ρ)]
+= Tr [ρ log G(ρ)] −Tr [ρ log σG]
+= Tr [G(ρ) log G(ρ)] −Tr [G(ρ) log σG]
+=D(G(ρ)||σG),
+where the second to the last equality comes from the fact that states ρ and G(ρ) have the same covariance, and both
+G(ρ), σG have the quadratic structure exp(γT hγ).
+We obtain the following corollary based on this theorem and G(⊠kρ) = G(ρ) from Lemma E.2:
+Corollary E.1. For any fermionic state ρ, we have
+min
+σG∈Gauss D(⊠kρ||σG) = D(⊠kρ||G(ρ)) = S(G(ρ)) −S(⊠kρ),
+(E.3)
+for any integer k, where Gauss denotes the set of all fermionic Gaussian states.
+Appendix F: Gaussian unitary testing
+In this section, we use the Choi–Jamiołkowski isomorphism to extend convolution results from states to unitary
+channels. The Choi–Jamiołkowski isomorphism in the context of the fermion algebra has first been considered in [37],
+in which it was shown that the Fourier representation of completely-positive trace-preserving Gaussian channels have
+a Lagrangian integral representation in the Grassmann algebra. Here, we characterize the conditions for the Choi
+state of a unitary channel to be fermionic Gaussian. By doing this, we are able to prove that a unitary channel is
+Gaussian iff it is even and has a fermionic Gaussian Choi state.
+The fermionic maximally-entangled state ρI ∈C4n on n + n qubits is ([37], Definition 6)
+ρI =
+1
+22n
+2n
+Y
+j=1
+(1 + iγjγ2n+j).
+(F.1)
+
+26
+Note that this is not the usual maximally-entangled state P
+x∈{0,1}n |x⟩⊗|x⟩, which is not fermionic Gaussian. Assign
+Grassmann variables η1, · · · , η2n to the first n and ˜η1, · · · , ˜η2n to the last n modes, the Fourier representation is
+ΞρI(η, ˜η) =
+2n
+Y
+j=1
+exp(iηjη2n+j) = exp
+ iηT ˜η
+
+.
+(F.2)
+First note that the maximally entangled state expression (F.2) has a Gaussian expression since
+ηT ˜η = 1
+2
+
+η
+˜η
+T 
+0
+12n×2n
+−12n×2n
+0
+ 
+η
+˜η
+
+.
+(F.3)
+The Choi state of a channel Φ : C2n →C2n is Φ applied to one half of the maximally entangled state.
+ρΦ = (Φ ⊗1C2n→C2n)ρI ∈C4n.
+(F.4)
+Since we restrict our attention to unitary channels, denote the Choi state of the unitary channel ΦU by ρU instead of
+ρΦU . We begin with a lemma which constrains the real linear transforms of generators available by unitary conjugation.
+Lemma F.1. Given a unitary U ∈C2n whose conjugate action is a real linear transform of the generators UγjU † =
+P2n
+k=1 Ajkγk, then A is an orthogonal matrix satisfying AT A = I.
+Proof. Unitary conjugation effects an automorphism of the algebra, so it must preserve the Clifford relation (A.3):
+2δjk = {
+X
+a
+Ajaγa,
+X
+b
+Akbγb} =
+X
+ab
+AjaAkb{γa, γb}
+=
+X
+ab
+AjaAkb2δab = 2
+X
+a
+AjaAka,
+where δjk = (AT A)jk implies that A ∈O(2n).
+Lemma (F.1) does not establish that U is Gaussian: Gaussian unitaries biject with SO(2n, R), and there exists
+non-Gaussian unitaries which correspond to an orthongonal matrix O with det O = −1. A simple example is U = γ1
+whose corresponding 2n × 2n orthogonal transformation O is diag([1, −1, −1, ..., −1]) with det O = −1.
+Lemma F.2 (Characterization of Gaussian Choi states). For any unitary channel ΦU : C2n →C2n,
+Φ(A) = UAU †,
+i.e., has the following form the Fourier transform of the Choi state is Gaussian
+ΞρU (η, ˜η) = exp
+"
+i
+2
+
+η
+˜η
+T 
+0
+OT
+−O
+0
+ 
+η
+˜η
+#
+,
+OOT = I,
+(F.5)
+if and only if U effects an orthogonal transform η 7→Oη.
+Proof. Given a n-qubit Gaussian U with rotation R, the channel ΦU ⊗1C2n→C2n applies R to η and leaves ˜η unchanged.
+Substituting this yields the expression for a Gaussian state (F.5):
+ΞρU (η, ˜η) = ΞρI(Rη, ˜η) = exp
+ iηT RT ˜η
+
+.
+Conversely, given a Gaussian state ΦU on 2n qubits with generators η, ˜η,
+ΞΦU (η, ˜η) = exp
+"
+i
+2
+
+η
+˜η
+T
+M
+
+η
+˜η
+#
+,
+M =
+
+A
+BT
+−B
+D
+
+,
+A, D antisymmetric,
+Bjk ∈R.
+(F.6)
+Since ΦU is a Choi state derived from ρI according to equation (F.2), the Fourier expression satisfies
+ΞΦU (η, ˜η) = ΞρI(φ(η), ˜η),
+for some transformation φ corresponding to the unitary action of U. The Gaussian expression (F.6) further constrains
+φ(η) = Oη for some 2n × 2n real matrix O, and invoking Lemma F.1 shows that O must be an orthogonal matrix.
+Substituting this simplifies expression (F.6) to the Gaussian expression (F.5).
+
+27
+Gaussian unitaries biject with rotations SO(2n, R) ⊊O(2n), so to perform a Gaussian unitary channel test we only
+need to distinguish between det O = ±1. To do so, we need the following lemma.
+Lemma F.3 (Special orthogonality criterion). Given U ∈C2n which effects an orthogonal transform γ 7→Oγ, then
+U is Gaussian iff it is even.
+Proof. Consider the pure diagonal Gaussian
+ρ0 = (|0⟩⟨0|)⊗n = 1
+2n
+n
+O
+j=1
+(1 + Zj) = 1
+2n
+n
+O
+j=1
+(1 −iγ2j−1γ2j),
+and the corresponding momoent generating operator
+Ξρ0(η) =
+n
+O
+j=1
+(1 −iη2j−1η2j) = exp
+
+−i
+n
+X
+j=1
+η2j−1η2j
+
+
+= exp
+ i
+2ηT hη
+
+,
+where
+h = −
+n
+M
+j=1
+
+0 −1
+1
+0
+
+.
+Applying Wick’s theorem (Lemma B.7) and the Pfaffian property Pf(AT BA) = det(A)Pf(B), we obtain
+Tr
+h
+γ†
+[2n]ρ0
+i
+= (ρ0)[2n] = Pf(h),
+and
+Tr
+h
+γ†
+[2n]Uρ0U †i
+= (Uρ0U †)[2n] = Pf(OT hO) = det(O)Pf(h) = det(O) Tr
+h
+γ†
+[2n]ρ0
+i
+.
+Note that γ†
+[2n] ∝Z⊗n and ρ0 is nontrivial in the γ[2n] component, then
+det O = 1 ⇐⇒Tr
+h
+(U †γ†
+[2n]U)ρ0
+i
+= Tr(γ†
+[2n]ρ0)
+⇐⇒[U, γ†
+[2n]] = 0 ⇐⇒[U, Z⊗n] = 0.
+This establishes that given O orthogonal, U is Gaussian iff O is a rotation iff det O = 1 iff U is even.
+Theorem F.4 (Gaussian unitary channel test). A unitary channel EU is Gaussian if and only if
+1. the Choi state ρU passes the fermionic Gaussian state test, and
+2. U passes the even unitary test in Lemma A.5.
+Proof. If U is Gaussian, then ρU is Gaussian by Lemma F.2 and even by definition. Conversely, by Lemma F.2 the
+Choi state ρU is Gaussian iff U effects an orthogonal transform of the generators, then Lemma F.3 establishes that U
+is Gaussian iff it additionally passes the even unitary test.

@@ -31,7 +31,7 @@ class MCPClient:
         self.anthropic = Anthropic(api_key=key)
         self.claude_args = claude_args
 
-    async def process_query(self, messages: list, pdf_root="./files", pdf_files=None, max_rounds=25) -> str:
+    async def process_query(self, messages: list, pdf_root="./files", pdf_files=None, max_rounds=50) -> str:
         """
         pdf_root: where to look for pdf's
         pdf_files: which pdf files to parse & add to conversation. By default, everything in the folder is added 

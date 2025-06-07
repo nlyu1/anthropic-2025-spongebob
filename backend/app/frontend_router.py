@@ -40,7 +40,7 @@ SYSTEM_PROMPT = """You are connected to a MCP tool `pdf_search`. The current con
 1. Whenever you return a message of type 'text', it is displayed to the user. 
 2. Whenever you return a message of type 'tool_use', it is passed to the `pdf_search` tool. The output of the tool is given back to you. However, make sure to vocally acknowledge the result / success of the tool call results, since the tool-use response will not be streamed to the client.
 3. Your round ends and control is yielded back to the user for input, when you output message only containing type `text`. 
-4. **Make at most 20 tool calls**. Make sure to check the number of tool calls you have made, and output. 
+4. **Make at most 20 tool calls**. Make sure to check the number of tool calls you have made, and output. Output tentative summaries if you are close to the limit. 
 5. The frontend has rich markdown formatting capabilities.
 6. When asked to reason about relevant documents, make sure to use the `pdf_search` tool to verify key claims. It searches the entire document for string-matches and returns the surrounding context. 
 
